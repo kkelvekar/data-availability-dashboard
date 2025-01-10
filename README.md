@@ -1,4 +1,3 @@
-
 # 1. Project Overview
 
 ## 1.1 Purpose
@@ -10,7 +9,7 @@
 - **Security Prices**  
 - …and many more (the set of domains is not fixed)
 
-This system is **fully configurable**: simply adding a new row in the **Data Catalog Config Table** (in MS SQL) automatically enables the retrieval and display of that new domain’s metrics.
+This system is **fully configurable**: simply adding a new row in the **DataDomainConfig** (in MS SQL) automatically enables the retrieval and display of that new domain’s metrics.
 
 In **Phase One**, the system will:
 1. **Display** the count of data records and the latest load date for each domain.  
@@ -21,10 +20,10 @@ In **Phase One**, the system will:
 The **Data Availability Dashboard** solution has **three main components**:
 
 1. **Front-End** (React + UBS NEO):  
-   - The user interface displays a grid of domains, counts, dates, etc.  
+   - The user interface displays a grid of domains, counts, dates, etc.
 
 2. **Orchestrator Backend** (this .NET 8 API):  
-   - Reads from the Data Catalog Config Table (MS SQL) to get domain info (URLs, entity keys).  
+   - Reads from the **DataDomainConfig** (MS SQL) plus any child configuration table (e.g., **DomainSourceGraphQL**) to get domain info (URLs, entity keys).  
    - Calls **domain-specific GraphQL endpoints** asynchronously for each domain to retrieve load metrics (count, date).  
    - Aggregates results into a single response.
 
@@ -35,9 +34,9 @@ The **Data Availability Dashboard** solution has **three main components**:
 ### Steps in the Data Flow
 
 1. **React Front-End** calls our new **.NET 8** “Data Availability Dashboard” backend endpoint (`GET /api/data-availability`) with a valid Azure AD token.  
-2. The backend retrieves the list of domains from the **Data Catalog Config Table**.  
-3. For each domain, it calls the corresponding **GraphQL endpoint** asynchronously, using fields such as “Data Domain” (e.g., `pricing`, `fianalytics`) and “Entity Key” (e.g., `fxrate`, `benchmarkholding`).  
-4. Each GraphQL endpoint returns a **count** and **load date** for the domain.  
+2. The backend retrieves the list of domains from **DataDomainConfig** (and for each domain, the child table if `SourceType = 'GraphQL'`).  
+3. For each domain, it calls the corresponding **GraphQL endpoint** asynchronously, using fields such as “BaseUrl,” “EndpointPath,” and “EntityKey” from the config tables.  
+4. Each GraphQL endpoint returns a **count** and **load date** for that domain.  
 5. The backend aggregates these responses into a single JSON payload.  
 6. The JSON payload is returned to the **React** front-end, which displays it in the UBS NEO UI.  
 7. Both the backend and GraphQL endpoints are **secured by Azure AD**.
@@ -95,7 +94,7 @@ DataAvailabilityDashboard
     }
     ```
 
-> _Note_: The “Data Catalog Config Table” (which holds `Domain Name`, `Data Domain`, `Entity Key`) is effectively part of the domain concept, but in practical terms, it will be retrieved via a repository in the Infrastructure layer.
+> _Note_: **DataDomainConfig** (and child tables like **DomainSourceGraphQL**) live in the Infrastructure layer but conceptually represent domain-level configurations.
 
 ---
 
@@ -110,8 +109,8 @@ DataAvailabilityDashboard
 
 - **Key Components**:
   1. **Interfaces**  
-     - `IConfigRepository`: fetches the “Data Catalog Config” from MS SQL.  
-     - `IGraphQLService`: calls the appropriate GraphQL endpoint, given a base URL segment (e.g., `pricing`, `fianalytics`) and an entity key (e.g. `fxrate`, `benchmarkholding`).  
+     - `IConfigRepository`: fetches **DataDomainConfig** (and its child config) from MS SQL.  
+     - `IGraphQLService`: calls the appropriate GraphQL endpoint, given a base URL segment and an entity key.  
      - `IDataDomainService`: orchestrates the entire flow, aggregating the data into a final response.  
   2. **Services**  
      - `DataDomainService`: A high-level application service (or use case handler).  
@@ -131,23 +130,37 @@ DataAvailabilityDashboard
 
 ## 2.3.1 Persistence
 
-- Contains logic to interact with **MS SQL** and fetch the “Data Catalog Config Table” entries, storing them in a list or an EF Core `DbContext`.
-- Example table rows:
+We store domain configurations in two tables:
 
-| Id (GUID) | Domain Name                | Data Domain   | Entity Key           |
-|-----------|----------------------------|---------------|----------------------|
-| ...       | FxRates                    | pricing       | fxrate              |
-| ...       | Fixed Income (FI) Analytics| fianalytics   | benchmarkholding    |
-| ...       | Security Prices           | pricing       | security            |
-| ...       | [Your New Domain Here]    | ???           | ???                 |
+1. **DataDomainConfig** (main table)  
+   | Column (PK)      | Type                  | Description                                                           |
+   |------------------|-----------------------|-----------------------------------------------------------------------|
+   | **Id**           | uniqueidentifier      | Unique identifier for this domain’s config.                          |
+   | **DomainName**   | nvarchar(100)        | E.g. "FxRates", "Fixed Income (FI) Analytics"                        |
+   | **SourceType**   | nvarchar(50)         | E.g. "GraphQL" (later "REST", "SQL", etc.)                           |
+   | **IsActive**     | bit                  | Indicates if this domain is active                                    |
+   | **CreatedDate**  | datetime2            | Audit field                                                           |
+   | **UpdatedDate**  | datetime2            | Audit field                                                           |
 
-Adding a new row will cause the orchestrator to retrieve metrics for that domain automatically.
+2. **DomainSourceGraphQL** (child table for GraphQL-specific fields)  
+   | Column (PK)       | Type               | Description                                                                      |
+   |-------------------|--------------------|----------------------------------------------------------------------------------|
+   | **DataDomainId**  | uniqueidentifier FK| References `DataDomainConfig.Id`                                                |
+   | **DevBaseUrl**    | nvarchar(2000)     | E.g. `https://api.cedar-dev.azpriv-cloud.ubs.net/dataservices`                  |
+   | **QaBaseUrl**     | nvarchar(2000)     | E.g. `https://api.cedar-qa.azpriv-cloud.ubs.net/dataservices` (example)         |
+   | **PreProdBaseUrl**| nvarchar(2000)     | E.g. `https://api.cedar-preprod.azpriv-cloud.ubs.net/dataservices` (example)    |
+   | **ProdBaseUrl**   | nvarchar(2000)     | E.g. `https://api.cedar-prod.azpriv-cloud.ubs.net/dataservices` (example)       |
+   | **EndpointPath**  | nvarchar(500)      | Often `/<DataDomain>/graphql/` or similar                                       |
+   | **EntityKey**     | nvarchar(100)      | Parameter used in the GraphQL query (e.g. `fxrate`, `benchmarkholding`)         |
+
+If `SourceType = 'GraphQL'`, we lookup **DomainSourceGraphQL** to get environment-specific Base URLs, endpoint path, and entity key. If we add other data sources later (REST, SQL), we can create analogous child tables (e.g. `DomainSourceRest`, `DomainSourceSql`).
 
 ## 2.3.2 GraphQL
 
-- Implements the actual GraphQL POST call.  
-- Builds a query string with the needed variables (`entityName`) and the URL path segment from the “Data Domain” column.  
-- Deserializes the response into `loadDate` and `count` (returned as `DataMetric`).
+- **GraphQLService** uses `HttpClient` to call the domain’s GraphQL endpoint.
+- Builds the query using `EntityKey`.
+- Chooses the appropriate BaseUrl based on environment (Dev, QA, PreProd, Prod), appending `EndpointPath`.
+- Deserializes the response into `loadDate` and `count` as `DataMetric`.
 
 ---
 
@@ -170,24 +183,31 @@ Adding a new row will cause the orchestrator to retrieve metrics for that domain
 
 ## 3.1 Data Catalog Config Table
 
-Stores the config that maps **Domain Name** → **Data Domain** (URL segment) + **Entity Key** (GraphQL variable). The orchestrator retrieves these rows to know which GraphQL calls to make.
+In this solution, the data catalog config is implemented via **DataDomainConfig** (main) and **DomainSourceGraphQL** (child) for GraphQL-based domains. For example:
 
-| Id (GUID)  | Domain Name               | Data Domain  | Entity Key        |
-|------------|---------------------------|--------------|-------------------|
-| <new guid> | FxRates                   | pricing      | fxrate            |
-| <new guid> | Fixed Income (FI) Analytics | fianalytics | benchmarkholding  |
-| <new guid> | Security Prices           | pricing      | security          |
+**DataDomainConfig**:
+| Id (GUID)  | DomainName                    | SourceType | IsActive | CreatedDate | UpdatedDate |
+|------------|-------------------------------|-----------|----------|------------|------------|
+| <new guid> | FxRates                       | GraphQL   | 1        | 2025-01-01 | 2025-01-02 |
+| <new guid> | Fixed Income (FI) Analytics   | GraphQL   | 1        | 2025-01-01 | 2025-01-02 |
+| <new guid> | Security Prices               | GraphQL   | 1        | 2025-01-01 | 2025-01-02 |
+
+**DomainSourceGraphQL**:
+| DataDomainId                            | DevBaseUrl                                          | QaBaseUrl                                          | PreProdBaseUrl                                       | ProdBaseUrl                                           | EndpointPath             | EntityKey           |
+|-----------------------------------------|------------------------------------------------------|-----------------------------------------------------|-------------------------------------------------------|-------------------------------------------------------|--------------------------|----------------------|
+| <matching guid to FxRates>             | https://api.cedar-dev.azpriv-cloud.ubs.net/...      | https://api.cedar-qa.azpriv-cloud.ubs.net/...      | https://api.cedar-preprod.azpriv-cloud.ubs.net/...   | https://api.cedar-prod.azpriv-cloud.ubs.net/...      | /pricing/graphql/        | fxrate              |
+| <matching guid to FI Analytics>         | https://api.cedar-dev.azpriv-cloud.ubs.net/...      | https://api.cedar-qa.azpriv-cloud.ubs.net/...      | https://api.cedar-preprod.azpriv-cloud.ubs.net/...   | https://api.cedar-prod.azpriv-cloud.ubs.net/...      | /fianalytics/graphql/    | benchmarkholding    |
+| <matching guid to Security Prices>      | https://api.cedar-dev.azpriv-cloud.ubs.net/...      | https://api.cedar-qa.azpriv-cloud.ubs.net/...      | https://api.cedar-preprod.azpriv-cloud.ubs.net/...   | https://api.cedar-prod.azpriv-cloud.ubs.net/...      | /pricing/graphql/        | security            |
 
 ## 3.2 GraphQL Endpoints
 
-The typical endpoints (DEV, QA, UAT, PROD) look like:
+Each environment’s **BaseUrl** + **EndpointPath** yields a final call like:
 ```
-DEV:  https://api.cedar-dev.azpriv-cloud.ubs.net/dataservices/<DataDomain>/graphql/
-QA:   https://api.cedar-test.azpriv-cloud.ubs.net/dataservices/<DataDomain>/graphql/
-UAT:  https://api.cedar-preprod.azpriv-cloud.ubs.net/dataservices/<DataDomain>/graphql/
-PROD: https://api.cedar-prod.azpriv-cloud.ubs.net/dataservices/<DataDomain>/graphql/
+DEV:  https://api.cedar-dev.azpriv-cloud.ubs.net/dataservices/pricing/graphql/
+QA:   https://api.cedar-qa.azpriv-cloud.ubs.net/dataservices/fianalytics/graphql/
+...
 ```
-With a query like:
+The orchestrator passes `EntityKey` to the query, e.g.:
 ```graphql
 query {
   monitoringCounts(entityName: "fxrate") {
@@ -202,16 +222,17 @@ query {
 1. **Frontend** calls `GET /api/data-availability` with a valid token.  
 2. **`DataAvailabilityController`** calls **`DataDomainService`**.  
 3. **`DataDomainService`**:
-   - Queries **`IConfigRepository`** for config rows.  
-   - For each config, calls **`IGraphQLService`** asynchronously.  
-   - Aggregates results into `List<DataDomain>`.  
+   - Queries **`IConfigRepository`** to get each domain’s `SourceType` and details from **DataDomainConfig**.  
+   - If `SourceType = 'GraphQL'`, retrieves the row from **DomainSourceGraphQL** to form the final endpoint.  
+   - Calls **`IGraphQLService`** asynchronously (one call per domain).  
+   - Aggregates results into `List<DataDomain>` with `List<DataMetric>`.  
 4. **Controller** returns the aggregated list as JSON.
 
 ---
 
 # 4. Security Considerations (Azure AD)
 
-1. **API Protection**: The orchestrator WebApi is protected by Azure AD (via `AddMicrosoftIdentityWebApi(...)`, for example). The React UI obtains an **access token** from Azure AD using MSAL in the browser.  
+1. **API Protection**: The orchestrator WebApi is protected by Azure AD (via `AddMicrosoftIdentityWebApi(...)`). The React UI obtains an **access token** from Azure AD using MSAL in the browser.  
 2. **Downstream GraphQL Calls**: If the GraphQL endpoints require their own Azure AD tokens, an **On-Behalf-Of** flow may be used. Alternatively, they may accept the same token or a separate client credential token.  
 3. **Configuration**:  
    - Azure AD application registration for the orchestrator.  
@@ -237,7 +258,7 @@ query {
 ### 5.3 Infrastructure Layer
 
 **Folder**: `DataAvailabilityDashboard.Infrastructure`  
-- **Persistence** (`ConfigRepository`): Fetches config from MS SQL.  
+- **Persistence** (`ConfigRepository`): Fetches config from MS SQL (via **DataDomainConfig** + **DomainSourceGraphQL**).  
 - **GraphQL** (`GraphQLService`): Calls domain-specific GraphQL endpoints with `HttpClient`.  
 - **Security**: May store Azure AD logic (if needed).
 
@@ -272,7 +293,8 @@ DataAvailabilityDashboard.sln
     ├── DataAvailabilityDashboard.Infrastructure
     │   ├── Persistence
     │   │   ├── ConfigRepository.cs
-    │   │   └── DataCatalogConfig.cs // EF entity or mapping for DB table
+    │   │   ├── DataDomainConfig.cs         // EF entity or mapping for main config table
+    │   │   └── DomainSourceGraphQL.cs      // EF entity or mapping for GraphQL-specific table
     │   ├── GraphQL
     │   │   └── GraphQLService.cs
     │   └── Security
@@ -317,12 +339,12 @@ DataAvailabilityDashboard.sln
 The **Data Availability Dashboard** solution uses **.NET 8**, **Clean Architecture**, and **Azure AD** security to create a **configurable**, **extensible**, and **testable** orchestrator API. The three main components—**React Front-End**, **.NET Orchestrator**, and **GraphQL Services**—work together as follows:
 
 - **Front-End**: Displays data to UBS NEO users.  
-- **Orchestrator**: Retrieves config from MS SQL, calls GraphQL services asynchronously, aggregates results.  
+- **Orchestrator**: Retrieves config from MS SQL (via **DataDomainConfig** + **DomainSourceGraphQL**), calls GraphQL services asynchronously, aggregates results.  
 - **GraphQL Services**: Provide domain-specific data counts and load dates.
 
 **Clean Architecture** provides a future-proof design, allowing us to:
-- Easily add new data domains by simply updating the config table.  
-- Introduce new data sources (e.g., direct MS SQL queries) without impacting other layers.  
+- Easily add new data domains by simply inserting rows into **DataDomainConfig** and (for GraphQL) **DomainSourceGraphQL**.  
+- Introduce new data sources (REST, SQL, etc.) by creating additional child tables (e.g., `DomainSourceRest`, `DomainSourceSql`)—without impacting other layers.  
 - Maintain clear separation of concerns (Domain, Application, Infrastructure, WebApi).
 
 As new requirements (e.g., additional columns or data domains) appear, the architecture’s flexibility ensures minimal friction for ongoing development.
