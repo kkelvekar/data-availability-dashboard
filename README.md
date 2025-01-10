@@ -2,7 +2,7 @@
 
 ## 1.1 Purpose
 
-**Data Availability Dashboard** is a web application for UBS Investment Bank. It provides a **single dashboard** showing daily data load metrics (count, date, etc.) across various data domains, for example:
+**Data Availability Dashboard** is a web application for UBS Advantage Stakeholders. It provides a **single dashboard** showing daily data load metrics (count, date, etc.) across various data domains, for example:
 
 - **FxRates**  
 - **Fixed Income (FI) Analytics**  
