@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35707.178
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{4DAEB1F6-AA47-45CB-9749-5876DC010ACB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{F1D6EFF6-8E02-419D-B717-7FDDB6A232D4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{EEDBEBB3-CA58-4585-B5A0-4FF5EDDC9CD7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.API", "API\DaDashboard.API\DaDashboard.API.csproj", "{FF8A4A44-A470-4100-8FB6-51CF9352B88F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.Domain", "Core\DaDashboard.Domain\DaDashboard.Domain.csproj", "{CED977F3-616E-47C4-B666-7F7F8331DBFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.Application", "Core\DaDashboard.Application\DaDashboard.Application.csproj", "{22E7413C-2A63-424B-B36C-2BED48EC3154}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.Persistence", "Infrastructure\DaDashboard.Persistence\DaDashboard.Persistence.csproj", "{FA671E6B-7CF9-4A47-AB8B-12151030F8F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.DataSource.GraphQL", "Infrastructure\DaDashboard.DataSource.GraphQL\DaDashboard.DataSource.GraphQL.csproj", "{ECFD3DCC-A1A1-4127-91F8-82245545536A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FF8A4A44-A470-4100-8FB6-51CF9352B88F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF8A4A44-A470-4100-8FB6-51CF9352B88F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF8A4A44-A470-4100-8FB6-51CF9352B88F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF8A4A44-A470-4100-8FB6-51CF9352B88F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CED977F3-616E-47C4-B666-7F7F8331DBFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CED977F3-616E-47C4-B666-7F7F8331DBFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CED977F3-616E-47C4-B666-7F7F8331DBFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CED977F3-616E-47C4-B666-7F7F8331DBFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22E7413C-2A63-424B-B36C-2BED48EC3154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22E7413C-2A63-424B-B36C-2BED48EC3154}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22E7413C-2A63-424B-B36C-2BED48EC3154}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22E7413C-2A63-424B-B36C-2BED48EC3154}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA671E6B-7CF9-4A47-AB8B-12151030F8F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA671E6B-7CF9-4A47-AB8B-12151030F8F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA671E6B-7CF9-4A47-AB8B-12151030F8F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA671E6B-7CF9-4A47-AB8B-12151030F8F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECFD3DCC-A1A1-4127-91F8-82245545536A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECFD3DCC-A1A1-4127-91F8-82245545536A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECFD3DCC-A1A1-4127-91F8-82245545536A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECFD3DCC-A1A1-4127-91F8-82245545536A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FF8A4A44-A470-4100-8FB6-51CF9352B88F} = {4DAEB1F6-AA47-45CB-9749-5876DC010ACB}
+		{CED977F3-616E-47C4-B666-7F7F8331DBFA} = {F1D6EFF6-8E02-419D-B717-7FDDB6A232D4}
+		{22E7413C-2A63-424B-B36C-2BED48EC3154} = {F1D6EFF6-8E02-419D-B717-7FDDB6A232D4}
+		{FA671E6B-7CF9-4A47-AB8B-12151030F8F7} = {EEDBEBB3-CA58-4585-B5A0-4FF5EDDC9CD7}
+		{ECFD3DCC-A1A1-4127-91F8-82245545536A} = {EEDBEBB3-CA58-4585-B5A0-4FF5EDDC9CD7}
+	EndGlobalSection
+EndGlobal
