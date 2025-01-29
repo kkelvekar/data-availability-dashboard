@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\DaDashboard.Application\DaDashboard.Application.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\DaDashboard.DataSource.GraphQL\DaDashboard.DataSource.GraphQL.csproj" />
   </ItemGroup>
 
 </Project>

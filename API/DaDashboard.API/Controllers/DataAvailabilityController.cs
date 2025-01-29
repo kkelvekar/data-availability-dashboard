@@ -15,9 +15,9 @@ namespace DaDashboard.API.Controllers
         }
 
         [HttpGet("data-domain/{date}")]
-        public IActionResult GetDataDomains(string date)
+        public async Task<IActionResult> GetDataDomains(string date)
         {
-            var dataDomains = _dataDomainOrchestrator.GetDataDomains(date);
+            var dataDomains = await _dataDomainOrchestrator.GetDataDomainsAsync(date);
             return Ok(dataDomains);
         }
     }

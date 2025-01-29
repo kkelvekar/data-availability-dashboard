@@ -1,0 +1,6 @@
+@DaDashboard.GraphQL_HostAddress = http://localhost:5189
+
+GET {{DaDashboard.GraphQL_HostAddress}}/graphql/
+Accept: application/json
+
+###

@@ -4,6 +4,6 @@ namespace DaDashboard.Application.Contracts.Application
 {
     public interface IDataDomainOrchestrator
     {
-        IEnumerable<DataDomain> GetDataDomains(string date);
+        Task<IEnumerable<DataDomain>> GetDataDomainsAsync(string date);
     }
 }
