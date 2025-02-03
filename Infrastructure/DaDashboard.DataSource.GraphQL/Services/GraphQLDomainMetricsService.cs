@@ -1,6 +1,6 @@
 ﻿using DaDashboard.Application.Contracts.Infrastructure.GraphQL;
 using DaDashboard.Application.Models.Infrastructure.GraphQL;
-using DaDashboard.DataSource.GraphQL.Common;
+using DaDashboard.DataSource.GraphQL.Helpers;
 using DaDashboard.DataSource.GraphQL.Models;
 
 namespace DaDashboard.DataSource.GraphQL.Services

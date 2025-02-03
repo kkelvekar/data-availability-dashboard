@@ -2,7 +2,7 @@
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 
-namespace DaDashboard.DataSource.GraphQL.Common
+namespace DaDashboard.DataSource.GraphQL.Helpers
 {
     /// <summary>
     /// A generic service to send GraphQL queries/mutations to any endpoint.
