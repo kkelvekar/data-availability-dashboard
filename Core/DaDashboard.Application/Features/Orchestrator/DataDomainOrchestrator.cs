@@ -53,6 +53,7 @@ namespace DaDashboard.Application.Features.Orchestrator
 
             return new DataDomain
             {
+                Id = config.Id,
                 Name = config.DomainName,
                 Metric = metric
             };
