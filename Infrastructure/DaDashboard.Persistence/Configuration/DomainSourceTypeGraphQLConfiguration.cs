@@ -13,10 +13,14 @@ namespace DaDashboard.Persistence.Configuration
     {
         public void Configure(EntityTypeBuilder<DomainSourceTypeGraphQL> builder)
         {
-            builder.ToTable("DomainSourceGraphQL");
+            builder.ToTable("DomainSourceTypeGraphQL");
 
-            // Primary Key
-            builder.HasKey(e => e.DataDomainId);
+            // Primary Key configuration
+            builder.HasKey(e => e.Id);  // Id is the primary key
+
+            // DataDomainId configuration
+            builder.Property(e => e.DataDomainId)
+                .IsRequired();
 
             // Properties
             builder.Property(e => e.DevBaseUrl)

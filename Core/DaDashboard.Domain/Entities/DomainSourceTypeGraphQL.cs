@@ -8,6 +8,7 @@ namespace DaDashboard.Domain.Entities
 {
     public class DomainSourceTypeGraphQL : AuditableEntity
     {
+        public Guid Id { get; set; }  // New primary key
         public Guid DataDomainId { get; set; }
         public string DevBaseUrl { get; set; }
         public string QaBaseUrl { get; set; }

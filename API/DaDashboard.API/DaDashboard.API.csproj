@@ -4,9 +4,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationInsightsResourceId>/subscriptions/bff66329-9b47-49ad-853d-bd567708da3c/resourceGroups/AzureAKSLearn/providers/microsoft.insights/components/kkelvekar-aks-insights</ApplicationInsightsResourceId>
+    <UserSecretsId>1f083571-bee3-4413-866e-b97478221db8</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
