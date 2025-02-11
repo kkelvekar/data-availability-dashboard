@@ -1,15 +1,23 @@
 ﻿using DaDashboard.Application.Contracts.Application.Orchestrator;
 using DaDashboard.Application.Contracts.Infrastructure.GraphQL;
+using DaDashboard.Application.Models.Infrastructure.GraphQL;
 using DaDashboard.Domain;
 using DaDashboard.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace DaDashboard.DataSource.GraphQL
 {
+    // A simple model to deserialize the Metadata JSON.
+    public class MetadataModel
+    {
+        public string[] entityKeys { get; set; }
+    }
+
     public class GraphQLDataSourceService : IDataSourceService
     {
         private readonly IGraphQLDomainMetricsService _graphQLMetricsService;
@@ -19,40 +27,57 @@ namespace DaDashboard.DataSource.GraphQL
             _graphQLMetricsService = graphQLMetricsService;
         }
 
-        // This service handles GraphQL source type
         public string SourceType => "GraphQL";
 
-        public async Task<DataMetric> GetDataMetricAsync(DataDomainConfig config, DateTime? effectiveDate)
+        public async Task<List<DataMetric>> GetDataMetricAsync(DataDomainConfig config, DateTime? effectiveDate)
         {
             var gqlConfig = config.DomainSourceGraphQL;
-            // To Do: In a real app, choose the proper URL based on the environment (Dev, QA, PreProd, Prod). For this example, we use ProdBaseUrl.
+            // Choose the proper URL based on your environment; here we use DevBaseUrl.
             string baseUrl = gqlConfig.DevBaseUrl;
             string endpoint = gqlConfig.EndpointPath;
-            string entityName = gqlConfig.EntityKey;
 
-            // Call the GraphQL endpoint using the existing service
-            var records = await _graphQLMetricsService.GetDataLoadMatrixAsync(
-                entityName: entityName,
-                effectiveDate: effectiveDate,
-                baseUrl: baseUrl,
-                endpoint: endpoint);
-
-            var record = records.FirstOrDefault();
-            if (record != null)
+            // Deserialize the metadata JSON; expected format: { "entityKeys": ["BENCHMARK", "FXRATE", ...] }
+            MetadataModel metadata;
+            try
             {
-                return new DataMetric
-                {
-                    Count = record.count,
-                    Date = record.effectiveDate
-                };
+                metadata = JsonSerializer.Deserialize<MetadataModel>(gqlConfig.Metadata);
+            }
+            catch (Exception)
+            {
+                // Fallback to an empty array if deserialization fails.
+                metadata = new MetadataModel { entityKeys = Array.Empty<string>() };
             }
 
-            // Return a default metric if no data is found
-            return new DataMetric
+            if (metadata?.entityKeys == null || metadata.entityKeys.Length == 0)
             {
-                Count = 0,
-                Date = DateTime.MinValue
-            };
+                return new List<DataMetric>();
+            }
+
+            // Create tasks to call the GraphQL endpoint concurrently for each entity key.
+            var tasks = new List<Task<IEnumerable<DataLoadMatrix>>>();
+            foreach (var entityKey in metadata.entityKeys)
+            {
+                tasks.Add(_graphQLMetricsService.GetDataLoadMatrixAsync(
+                    entityName: entityKey,
+                    effectiveDate: effectiveDate,
+                    baseUrl: baseUrl,
+                    endpoint: endpoint));
+            }
+
+            // Await all tasks concurrently.
+            var results = await Task.WhenAll(tasks);
+
+            // Flatten all records into a single list.
+            var allRecords = results.SelectMany(r => r).ToList();
+
+            // Map each DataLoadMatrix record to a DataMetric.
+            var dataMetrics = allRecords.Select(record => new DataMetric
+            {
+                Count = record.count,
+                Date = record.effectiveDate
+            }).ToList();
+
+            return dataMetrics;
         }
     }
 }

@@ -37,12 +37,7 @@ namespace DaDashboard.GraphQL.Queries
 
                 default:
                     // Default sample data if entityName is not provided or does not match known values.
-                    sampleData = new List<DataLoadMatrix>
-                    {
-                        new DataLoadMatrix { Count = 50, EffectiveDate = new DateTime(2025, 1, 27) },
-                        new DataLoadMatrix { Count = 55, EffectiveDate = new DateTime(2025, 1, 29) },
-                        new DataLoadMatrix { Count = 60, EffectiveDate = new DateTime(2025, 1, 25) }
-                    };
+                    sampleData = new List<DataLoadMatrix>();
                     break;
             }
 

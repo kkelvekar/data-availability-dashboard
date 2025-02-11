@@ -25,3 +25,22 @@ namespace DaDashboard.Persistence.Repositories
     }
 }
 
+//SELECT
+//    d.Id,
+//    d.DomainName,
+//    d.SourceType,
+//    d.IsActive,
+//    d.CreatedDate,
+//    d.UpdatedDate,
+//    g.DataDomainId,
+//    g.DevBaseUrl,
+//    g.QaBaseUrl,
+//    g.PreProdBaseUrl,
+//    g.ProdBaseUrl,
+//    g.EndpointPath,
+//    g.EntityKey,
+//    g.Metadata
+//FROM DataDomainConfigs AS d
+//LEFT JOIN DomainSourceTypeGraphQLs AS g 
+//    ON d.Id = g.DataDomainId
+//WHERE d.IsActive = @isActive;

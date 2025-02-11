@@ -4,6 +4,6 @@
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public DataMetric Metric { get; set; }
+        public List<DataMetric> Metrics { get; set; }
     }
 }

@@ -38,8 +38,7 @@ namespace DaDashboard.Persistence.Configuration
             builder.Property(e => e.EndpointPath)
                 .HasMaxLength(500);
 
-            builder.Property(e => e.EntityKey)
-                .HasMaxLength(100);
+            builder.Property(e => e.Metadata);             
 
             // Navigation
             builder.HasOne(e => e.DataDomainConfig)

@@ -15,7 +15,7 @@ namespace DaDashboard.Domain.Entities
         public string PreProdBaseUrl { get; set; }
         public string ProdBaseUrl { get; set; }
         public string EndpointPath { get; set; }
-        public string EntityKey { get; set; }
+        public string Metadata { get; set; }
 
         // Navigation property
         public DataDomainConfig DataDomainConfig { get; set; }

@@ -49,13 +49,13 @@ namespace DaDashboard.Application.Features.Orchestrator
         /// </summary>
         private async Task<DataDomain> GetDataDomainForConfigAsync(DataDomainConfig config, IDataSourceService service, DateTime? effectiveDate)
         {
-            DataMetric metric = await service.GetDataMetricAsync(config, effectiveDate);
+            List<DataMetric> metrics = await service.GetDataMetricAsync(config, effectiveDate);
 
             return new DataDomain
             {
                 Id = config.Id,
                 Name = config.DomainName,
-                Metric = metric
+                Metrics = metrics
             };
         }
     }

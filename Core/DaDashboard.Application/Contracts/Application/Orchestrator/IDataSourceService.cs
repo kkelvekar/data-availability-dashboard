@@ -14,6 +14,6 @@ namespace DaDashboard.Application.Contracts.Application.Orchestrator
         string SourceType { get; }
 
         // Returns the DataMetric for the given domain configuration and effective date.
-        Task<DataMetric> GetDataMetricAsync(DataDomainConfig config, DateTime? effectiveDate);
+        Task<List<DataMetric>> GetDataMetricAsync(DataDomainConfig config, DateTime? effectiveDate);
     }
 }
