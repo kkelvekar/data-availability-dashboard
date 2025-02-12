@@ -7,5 +7,6 @@
     {
         public int count { get; set; }
         public DateTime effectiveDate { get; set; }
+        public string entityKey { get; set; }
     }
 }

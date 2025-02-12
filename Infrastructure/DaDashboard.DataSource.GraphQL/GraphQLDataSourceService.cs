@@ -53,29 +53,29 @@ namespace DaDashboard.DataSource.GraphQL
                 return new List<DataMetric>();
             }
 
-            // Create tasks to call the GraphQL endpoint concurrently for each entity key.
-            var tasks = new List<Task<IEnumerable<DataLoadMatrix>>>();
-            foreach (var entityKey in metadata.entityKeys)
-            {
-                tasks.Add(_graphQLMetricsService.GetDataLoadMatrixAsync(
-                    entityName: entityKey,
-                    effectiveDate: effectiveDate,
-                    baseUrl: baseUrl,
-                    endpoint: endpoint));
-            }
+            // Create tasks concurrently using LINQ. Each task calls GetDataLoadMatrixAsync and then pairs the entityKey with its result.
+            var tasks = metadata.entityKeys.Select(entityKey =>
+                 _graphQLMetricsService.GetDataLoadMatrixAsync(
+                     entityName: entityKey,
+                     effectiveDate: effectiveDate,
+                     baseUrl: baseUrl,
+                     endpoint: endpoint)
+                 .ContinueWith(task => (entityKey, records: task.Result))
+            ).ToList();
 
             // Await all tasks concurrently.
             var results = await Task.WhenAll(tasks);
 
-            // Flatten all records into a single list.
-            var allRecords = results.SelectMany(r => r).ToList();
-
-            // Map each DataLoadMatrix record to a DataMetric.
-            var dataMetrics = allRecords.Select(record => new DataMetric
-            {
-                Count = record.count,
-                Date = record.effectiveDate
-            }).ToList();
+            // Flatten all records and map each DataLoadMatrix record to a DataMetric,
+            // setting the EntityKey from the tuple.
+            var dataMetrics = results.SelectMany(result =>
+                result.records.Select(record => new DataMetric
+                {
+                    EntityKey = result.entityKey,
+                    Count = record.count,
+                    Date = record.effectiveDate
+                })
+            ).ToList();
 
             return dataMetrics;
         }

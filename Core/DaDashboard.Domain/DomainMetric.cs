@@ -8,6 +8,7 @@ namespace DaDashboard.Domain
 {
     public class DataMetric
     {
+        public string EntityKey { get; set; }
         public int Count { get; set; }
         public DateTime Date { get; set; }
     }
