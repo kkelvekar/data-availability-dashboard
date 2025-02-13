@@ -22,6 +22,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9A467D8F-3F22-470F-AC75-14DF3AD54AD9}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		test.txt = test.txt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.GraphQL", "DaDashboard.GraphQL\DaDashboard.GraphQL.csproj", "{CE05CB42-1661-4E84-A981-6FDA412885A7}"
