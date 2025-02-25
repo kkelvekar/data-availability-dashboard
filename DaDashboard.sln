@@ -29,6 +29,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.GraphQL", "DaDa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.GraphQL.Consumer", "API\DaDashboard.GraphQL.Consumer\DaDashboard.GraphQL.Consumer.csproj", "{AA879DF0-313F-49B3-AEEA-77E6AC597F26}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.Application.Tests", "Tests\DaDashboard.Application.Tests\DaDashboard.Application.Tests.csproj", "{8A414CC6-2515-4E91-AB92-6840A60258D2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +67,10 @@ Global
 		{AA879DF0-313F-49B3-AEEA-77E6AC597F26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA879DF0-313F-49B3-AEEA-77E6AC597F26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA879DF0-313F-49B3-AEEA-77E6AC597F26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A414CC6-2515-4E91-AB92-6840A60258D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A414CC6-2515-4E91-AB92-6840A60258D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A414CC6-2515-4E91-AB92-6840A60258D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A414CC6-2515-4E91-AB92-6840A60258D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -75,5 +83,6 @@ Global
 		{ECFD3DCC-A1A1-4127-91F8-82245545536A} = {EEDBEBB3-CA58-4585-B5A0-4FF5EDDC9CD7}
 		{CE05CB42-1661-4E84-A981-6FDA412885A7} = {4DAEB1F6-AA47-45CB-9749-5876DC010ACB}
 		{AA879DF0-313F-49B3-AEEA-77E6AC597F26} = {4DAEB1F6-AA47-45CB-9749-5876DC010ACB}
+		{8A414CC6-2515-4E91-AB92-6840A60258D2} = {6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}
 	EndGlobalSection
 EndGlobal

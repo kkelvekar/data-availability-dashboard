@@ -4,29 +4,37 @@ using System.Linq;
 using System.Threading.Tasks;
 using DaDashboard.Application.Features.Orchestrator;
 using DaDashboard.Application.Contracts.Persistence;
-using DaDashboard.Application.Contracts.Application.Orchestrator;
 using DaDashboard.Domain;
 using DaDashboard.Domain.Entities;
 using FluentAssertions;
-using Moq;
+using AutoFixture;
+using AutoFixture.Xunit2;
+using NSubstitute;
 using Xunit;
+using DaDashboard.Application.Contracts.Application.Orchestrator;
 
 namespace DaDashboard.Application.Tests.Features.Orchestrator
 {
     public class DataDomainOrchestratorTests
     {
-        [Fact]
-        public async Task GetDataDomainsAsync_ShouldReturnEmpty_WhenNoConfigsFound()
+        [Theory]
+        [NSubstituteAutoData]
+        public async Task GetDataDomainsAsync_ShouldReturnEmpty_WhenNoConfigsFound(
+            [Frozen] IDataDomainConfigRepository repository,
+            Fixture fixture)
         {
-            // Arrange
-            var repositoryMock = new Mock<IDataDomainConfigRepository>();
-            repositoryMock
-                .Setup(r => r.GetAll(true))
-                .ReturnsAsync(new List<DataDomainConfig>());
+            // Configure fixture to omit circular references.
+            fixture.Behaviors
+                .OfType<ThrowingRecursionBehavior>()
+                .ToList()
+                .ForEach(b => fixture.Behaviors.Remove(b));
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
-            var dataSourceServices = new List<IDataSourceService>();
+            // Arrange: Repository returns an empty list.
+            repository.GetAll(true).Returns(new List<DataDomainConfig>());
+            fixture.Register<IEnumerable<IDataSourceService>>(() => new List<IDataSourceService>());
 
-            var orchestrator = new DataDomainOrchestrator(repositoryMock.Object, dataSourceServices);
+            var orchestrator = fixture.Create<DataDomainOrchestrator>();
 
             // Act
             var result = await orchestrator.GetDataDomainsAsync(effectiveDate: null);
@@ -35,41 +43,42 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
             result.Should().BeEmpty();
         }
 
-        [Fact]
-        public async Task GetDataDomainsAsync_ShouldReturnDomains_WhenMatchingServiceExists()
+        [Theory]
+        [NSubstituteAutoData]
+        public async Task GetDataDomainsAsync_ShouldReturnDomains_WhenMatchingServiceExists(
+            [Frozen] IDataDomainConfigRepository repository,
+            [Frozen] IDataSourceService dataSourceService,
+            Fixture fixture)
         {
+            // Configure fixture to omit circular references.
+            fixture.Behaviors
+                .OfType<ThrowingRecursionBehavior>()
+                .ToList()
+                .ForEach(b => fixture.Behaviors.Remove(b));
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+
             // Arrange
-            var config = new DataDomainConfig
-            {
-                Id = Guid.NewGuid(),
-                DomainName = "Test Domain",
-                SourceType = "GraphQL"
-            };
+            var config = fixture.Create<DataDomainConfig>();
+            var metricList = fixture.CreateMany<DataMetric>(1).ToList();
 
-            var metricList = new List<DataMetric>
-            {
-                new DataMetric() // add necessary property values if required
-            };
+            // Customize the config for this test scenario.
+            config.SourceType = "GraphQL";
+            config.DomainName = "Test Domain";
+            config.Id = Guid.NewGuid();
 
-            var repositoryMock = new Mock<IDataDomainConfigRepository>();
-            repositoryMock
-                .Setup(r => r.GetAll(true))
-                .ReturnsAsync(new List<DataDomainConfig> { config });
+            repository.GetAll(true).Returns(new List<DataDomainConfig> { config });
 
-            var dataSourceServiceMock = new Mock<IDataSourceService>();
-            dataSourceServiceMock
-                .Setup(s => s.SourceType)
-                .Returns("GraphQL");
-            dataSourceServiceMock
-                .Setup(s => s.GetDataMetricAsync(config, It.IsAny<DateTime?>()))
-                .ReturnsAsync(metricList);
+            dataSourceService.SourceType.Returns("GraphQL");
+            dataSourceService
+                .GetDataMetricAsync(config, Arg.Any<DateTime?>())
+                .Returns(Task.FromResult(metricList));
 
-            var dataSourceServices = new List<IDataSourceService> { dataSourceServiceMock.Object };
+            fixture.Register<IEnumerable<IDataSourceService>>(() => new[] { dataSourceService });
 
-            var orchestrator = new DataDomainOrchestrator(repositoryMock.Object, dataSourceServices);
+            var orchestrator = fixture.Create<DataDomainOrchestrator>();
+            var effectiveDate = new DateTime(2020, 1, 1);
 
             // Act
-            var effectiveDate = new DateTime(2020, 1, 1);
             var result = await orchestrator.GetDataDomainsAsync(effectiveDate);
 
             // Assert
@@ -79,35 +88,37 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
             domain.Name.Should().Be(config.DomainName);
             domain.Metrics.Should().BeEquivalentTo(metricList);
 
-            // Verify that the effective date is passed along
-            dataSourceServiceMock.Verify(s => s.GetDataMetricAsync(config, effectiveDate), Times.Once);
+            await dataSourceService.Received(1).GetDataMetricAsync(config, effectiveDate);
         }
 
-        [Fact]
-        public async Task GetDataDomainsAsync_ShouldSkipConfig_WhenNoMatchingServiceFound()
+        [Theory]
+        [NSubstituteAutoData]
+        public async Task GetDataDomainsAsync_ShouldSkipConfig_WhenNoMatchingServiceFound(
+            [Frozen] IDataDomainConfigRepository repository,
+            [Frozen] IDataSourceService dataSourceService,
+            Fixture fixture)
         {
+            // Configure fixture to omit circular references.
+            fixture.Behaviors
+                .OfType<ThrowingRecursionBehavior>()
+                .ToList()
+                .ForEach(b => fixture.Behaviors.Remove(b));
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+
             // Arrange
-            var config = new DataDomainConfig
-            {
-                Id = Guid.NewGuid(),
-                DomainName = "Test Domain",
-                SourceType = "Kafka"
-            };
+            var config = fixture.Create<DataDomainConfig>();
+            config.SourceType = "Kafka";
+            config.DomainName = "Test Domain";
+            config.Id = Guid.NewGuid();
 
-            var repositoryMock = new Mock<IDataDomainConfigRepository>();
-            repositoryMock
-                .Setup(r => r.GetAll(true))
-                .ReturnsAsync(new List<DataDomainConfig> { config });
+            repository.GetAll(true).Returns(new List<DataDomainConfig> { config });
 
-            // Setup a service whose SourceType does NOT match the config's SourceType.
-            var dataSourceServiceMock = new Mock<IDataSourceService>();
-            dataSourceServiceMock
-                .Setup(s => s.SourceType)
-                .Returns("GraphQL");
+            // Setup a service with a non-matching SourceType.
+            dataSourceService.SourceType.Returns("GraphQL");
 
-            var dataSourceServices = new List<IDataSourceService> { dataSourceServiceMock.Object };
+            fixture.Register<IEnumerable<IDataSourceService>>(() => new[] { dataSourceService });
 
-            var orchestrator = new DataDomainOrchestrator(repositoryMock.Object, dataSourceServices);
+            var orchestrator = fixture.Create<DataDomainOrchestrator>();
 
             // Act
             var result = await orchestrator.GetDataDomainsAsync(effectiveDate: null);
@@ -116,55 +127,50 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
             result.Should().BeEmpty();
         }
 
-        [Fact]
-        public async Task GetDataDomainsAsync_ShouldReturnDomains_ForMultipleConfigs()
+        [Theory]
+        [NSubstituteAutoData]
+        public async Task GetDataDomainsAsync_ShouldReturnDomains_ForMultipleConfigs(
+            [Frozen] IDataDomainConfigRepository repository,
+            IDataSourceService dataSourceService1,
+            IDataSourceService dataSourceService2,
+            Fixture fixture)
         {
-            // Arrange
-            var config1 = new DataDomainConfig
-            {
-                Id = Guid.NewGuid(),
-                DomainName = "Domain 1",
-                SourceType = "GraphQL"
-            };
+            // Configure fixture to omit circular references.
+            fixture.Behaviors
+                .OfType<ThrowingRecursionBehavior>()
+                .ToList()
+                .ForEach(b => fixture.Behaviors.Remove(b));
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
-            var config2 = new DataDomainConfig
-            {
-                Id = Guid.NewGuid(),
-                DomainName = "Domain 2",
-                SourceType = "Kafka"
-            };
+            // Arrange: Create two distinct configs.
+            var config1 = fixture.Create<DataDomainConfig>();
+            var config2 = fixture.Create<DataDomainConfig>();
+            config1.SourceType = "GraphQL";
+            config1.DomainName = "Domain 1";
+            config1.Id = Guid.NewGuid();
 
-            var metricList1 = new List<DataMetric> { new DataMetric() };
-            var metricList2 = new List<DataMetric> { new DataMetric(), new DataMetric() };
+            config2.SourceType = "Kafka";
+            config2.DomainName = "Domain 2";
+            config2.Id = Guid.NewGuid();
 
-            var repositoryMock = new Mock<IDataDomainConfigRepository>();
-            repositoryMock
-                .Setup(r => r.GetAll(true))
-                .ReturnsAsync(new List<DataDomainConfig> { config1, config2 });
+            var metricList1 = fixture.CreateMany<DataMetric>(1).ToList();
+            var metricList2 = fixture.CreateMany<DataMetric>(2).ToList();
 
-            var dataSourceServiceMock1 = new Mock<IDataSourceService>();
-            dataSourceServiceMock1
-                .Setup(s => s.SourceType)
-                .Returns("GraphQL");
-            dataSourceServiceMock1
-                .Setup(s => s.GetDataMetricAsync(config1, It.IsAny<DateTime?>()))
-                .ReturnsAsync(metricList1);
+            repository.GetAll(true).Returns(new List<DataDomainConfig> { config1, config2 });
 
-            var dataSourceServiceMock2 = new Mock<IDataSourceService>();
-            dataSourceServiceMock2
-                .Setup(s => s.SourceType)
-                .Returns("Kafka");
-            dataSourceServiceMock2
-                .Setup(s => s.GetDataMetricAsync(config2, It.IsAny<DateTime?>()))
-                .ReturnsAsync(metricList2);
+            dataSourceService1.SourceType.Returns("GraphQL");
+            dataSourceService1
+                .GetDataMetricAsync(config1, Arg.Any<DateTime?>())
+                .Returns(Task.FromResult(metricList1));
 
-            var dataSourceServices = new List<IDataSourceService>
-            {
-                dataSourceServiceMock1.Object,
-                dataSourceServiceMock2.Object
-            };
+            dataSourceService2.SourceType.Returns("Kafka");
+            dataSourceService2
+                .GetDataMetricAsync(config2, Arg.Any<DateTime?>())
+                .Returns(Task.FromResult(metricList2));
 
-            var orchestrator = new DataDomainOrchestrator(repositoryMock.Object, dataSourceServices);
+            fixture.Register<IEnumerable<IDataSourceService>>(() => new[] { dataSourceService1, dataSourceService2 });
+
+            var orchestrator = fixture.Create<DataDomainOrchestrator>();
 
             // Act
             var result = await orchestrator.GetDataDomainsAsync(effectiveDate: null);
@@ -184,20 +190,27 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
             domain2.Metrics.Should().BeEquivalentTo(metricList2);
         }
 
-        [Fact]
-        public async Task GetDataDomainsAsync_ShouldThrow_WhenRepositoryReturnsNull()
+        [Theory]
+        [NSubstituteAutoData]
+        public async Task GetDataDomainsAsync_ShouldThrow_WhenRepositoryReturnsNull(
+            [Frozen] IDataDomainConfigRepository repository,
+            Fixture fixture)
         {
-            // Arrange
-            var repositoryMock = new Mock<IDataDomainConfigRepository>();
-            // Simulate repository returning null instead of a list
-            repositoryMock
-                .Setup(r => r.GetAll(true))
-                .ReturnsAsync((List<DataDomainConfig>)null);
+            // Configure fixture to omit circular references.
+            fixture.Behaviors
+                .OfType<ThrowingRecursionBehavior>()
+                .ToList()
+                .ForEach(b => fixture.Behaviors.Remove(b));
+            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
-            var orchestrator = new DataDomainOrchestrator(repositoryMock.Object, new List<IDataSourceService>());
+            // Arrange: Simulate repository returning null.
+            repository.GetAll(true).Returns((List<DataDomainConfig>)null);
+            fixture.Register<IEnumerable<IDataSourceService>>(() => new List<IDataSourceService>());
+
+            var orchestrator = fixture.Create<DataDomainOrchestrator>();
 
             // Act
-            Func<Task> act = async () => await orchestrator.GetDataDomainsAsync(null);
+            Func<Task> act = async () => await orchestrator.GetDataDomainsAsync(effectiveDate: null);
 
             // Assert
             await act.Should().ThrowAsync<NullReferenceException>();
