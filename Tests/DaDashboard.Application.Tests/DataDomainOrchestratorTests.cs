@@ -192,7 +192,7 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
 
         [Theory]
         [NSubstituteAutoData]
-        public async Task GetDataDomainsAsync_ShouldThrow_WhenRepositoryReturnsNull(
+        public async Task GetDataDomainsAsync_ShouldReturnNull_WhenRepositoryThrowsException(
             [Frozen] IDataDomainConfigRepository repository,
             Fixture fixture)
         {
@@ -203,17 +203,19 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
                 .ForEach(b => fixture.Behaviors.Remove(b));
             fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
-            // Arrange: Simulate repository returning null.
-            repository.GetAll(true).Returns((List<DataDomainConfig>)null);
+            // Arrange: Simulate a database connection failure by having GetAll throw an exception.
+            repository.GetAll(true).Returns(callInfo => Task.FromException<List<DataDomainConfig>>(new Exception("DB connection failure")));
+
             fixture.Register<IEnumerable<IDataSourceService>>(() => new List<IDataSourceService>());
 
             var orchestrator = fixture.Create<DataDomainOrchestrator>();
 
-            // Act
-            Func<Task> act = async () => await orchestrator.GetDataDomainsAsync(effectiveDate: null);
+            // Act: When the repository call fails, the orchestrator should catch the exception and return null.
+            var result = await orchestrator.GetDataDomainsAsync(effectiveDate: null);
 
-            // Assert
-            await act.Should().ThrowAsync<NullReferenceException>();
+            // Assert: The result should be null, indicating the error was handled gracefully.
+            result.Should().BeNull();
         }
+
     }
 }
