@@ -33,7 +33,7 @@ namespace DaDashboard.DataSource.GraphQL
         {
             var gqlConfig = config.DomainSourceGraphQL;
             // Choose the proper URL based on your environment; here we use DevBaseUrl.
-            string baseUrl = gqlConfig.DevBaseUrl;
+            string baseUrl = GetBaseUrl(gqlConfig);
             string endpoint = gqlConfig.EndpointPath;
 
             // Deserialize the metadata JSON; expected format: { "entityKeys": ["BENCHMARK", "FXRATE", ...] }
@@ -52,16 +52,30 @@ namespace DaDashboard.DataSource.GraphQL
             {
                 return new List<DataMetric>();
             }
-
+            List<Task<(string entityKey, IEnumerable<DataLoadMatrix> records)>> tasks;
             // Create tasks concurrently using LINQ. Each task calls GetDataLoadMatrixAsync and then pairs the entityKey with its result.
-            var tasks = metadata.entityKeys.Select(entityKey =>
-                 _graphQLMetricsService.GetDataLoadMatrixAsync(
-                     entityName: entityKey,
-                     effectiveDate: effectiveDate,
-                     baseUrl: baseUrl,
-                     endpoint: endpoint)
-                 .ContinueWith(task => (entityKey, records: task.Result))
-            ).ToList();
+            if (metadata.entityKeys.Any())
+            {
+                tasks = metadata.entityKeys.Select(entityKey =>
+                     _graphQLMetricsService.GetDataLoadMatrixAsync(
+                         entityName: entityKey,
+                         effectiveDate: effectiveDate,
+                         baseUrl: baseUrl,
+                         endpoint: endpoint)
+                     .ContinueWith(task => (entityKey, records: task.Result))
+                ).ToList();
+            }
+            else
+            {
+                tasks = new();
+                tasks.Add(_graphQLMetricsService.GetDataLoadMatrixAsync(
+                    entityName: null,
+                    effectiveDate: effectiveDate,
+                    baseUrl: baseUrl,
+                    endpoint: endpoint)
+                    .ContinueWith(task => (String.Empty, records: task.Result))
+                );
+            }
 
             // Await all tasks concurrently.
             var results = await Task.WhenAll(tasks);
@@ -73,11 +87,17 @@ namespace DaDashboard.DataSource.GraphQL
                 {
                     EntityKey = result.entityKey,
                     Count = record.count,
-                    Date = record.effectiveDate
+                    Date = record.effectiveDate,
+                    Message = record.Message
                 })
             ).ToList();
 
             return dataMetrics;
+        }
+
+        private string GetBaseUrl(DomainSourceTypeGraphQL gqlConfig)
+        {
+            return gqlConfig.DevBaseUrl;
         }
     }
 }

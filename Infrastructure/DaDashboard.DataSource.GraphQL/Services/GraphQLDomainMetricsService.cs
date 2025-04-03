@@ -2,6 +2,7 @@
 using DaDashboard.Application.Models.Infrastructure.GraphQL;
 using DaDashboard.DataSource.GraphQL.Helpers;
 using DaDashboard.DataSource.GraphQL.Models;
+using GraphQL.Client.Http;
 using Microsoft.Extensions.Logging;
 
 namespace DaDashboard.DataSource.GraphQL.Services
@@ -14,25 +15,39 @@ namespace DaDashboard.DataSource.GraphQL.Services
         private readonly GraphQLClientService _graphQLClientService;
         private readonly ILogger<GraphQLDomainMetricsService> _logger;
 
-        // Query that includes effectiveDate
-        private const string DataLoadMatrixQuery = @"
-          query ($entityName: String!, $effectiveDate: DateTime) {
-            dataLoadMatrix(entityName: $entityName, effectiveDate: $effectiveDate) {
-              count
-              effectiveDate
-            }
-          }
-        ";
+        private const string DataLoadMatrixQueryEntityNameEffDate = @"
+            query ($entityName: String!, $effectiveDate: DateTime!) {
+                dataLoadMatrix(entityName: $entityName, effectiveDate: $effectiveDate) {
+                    count
+                    effectiveDate
+                }
+            }";
+
+        // EffectiveDate but no entity name
+        private const string DataLoadMatrixQueryEffDate = @"
+            query ($effectiveDate: DateTime!) {
+                dataLoadMatrix(effectiveDate: $effectiveDate) {
+                    count
+                    effectiveDate
+                }
+            }";
 
         // Query without effectiveDate
-        private const string DataLoadMatrixQueryWithoutEffectiveDate = @"
-          query ($entityName: String!) {
-            dataLoadMatrix(entityName: $entityName) {
-              count
-              effectiveDate
-            }
-          }
-        ";
+        private const string DataLoadMatrixQueryEntityName = @"
+            query ($entityName: String!) {
+                dataLoadMatrix(entityName: $entityName) {
+                    count
+                    effectiveDate
+                }
+            }";
+
+        private const string DataLoadMatrixQueryNoParams = @"
+            query {
+                dataLoadMatrix() {
+                    count
+                    effectiveDate
+                }
+            }";
 
 
         public GraphQLDomainMetricsService(GraphQLClientService graphQLClientService, ILogger<GraphQLDomainMetricsService> logger)
@@ -59,8 +74,9 @@ namespace DaDashboard.DataSource.GraphQL.Services
         {
             try
             {
-                // Get the appropriate query and variables using helper methods.
-                var (query, variables) = GetQueryAndVariables(entityName, effectiveDate, endpoint);
+                // Get the appropriate query and variables using helper methods
+                var existence = GetParameterExistence(entityName, effectiveDate, endpoint);
+                var (query, variables) = GetQueryAndVariables(entityName, effectiveDate, existence);
 
                 // Call the generic GraphQL client
                 var response = await _graphQLClientService.SendQueryAsync<DataLoadMatrixResponse>(
@@ -79,67 +95,143 @@ namespace DaDashboard.DataSource.GraphQL.Services
                 // Return the dataLoadMatrix array (or empty if null)
                 return response.Data?.dataLoadMatrix ?? Array.Empty<DataLoadMatrix>();
             }
+            catch (GraphQLHttpRequestException gex)
+            {
+                // Log the exception and return an empty result so that processing continues.
+                _logger.LogError(gex, "GraphQL Error occurred while fetching data load matrix for entity {entityName} on endpoint {endpoint}", entityName, endpoint);
+                return new[]
+                {
+                    new DataLoadMatrix
+                    {
+                        effectiveDate = effectiveDate.HasValue ? effectiveDate.Value : default,
+                        entityKey = entityName,
+                        Message = $"GraphQL Error occurred while fetching data load matrix for entity {entityName} on endpoint {endpoint} : {gex.Message} ({gex.Content})"
+                    }
+                };
+            }
             catch (Exception ex)
             {
                 // Log unexpected exceptions and return an empty result so that processing continues.
                 _logger.LogError(ex, "Error occurred while fetching data load matrix for entity {entityName} on endpoint {endpoint}",
                     entityName, endpoint);
-                return Array.Empty<DataLoadMatrix>();
+                return new[]
+               {
+                    new DataLoadMatrix
+                    {
+                        effectiveDate = effectiveDate.HasValue ? effectiveDate.Value : default,
+                        entityKey = entityName,
+                        Message = $"Error occurred while fetching data load matrix for entity {entityName} on endpoint {endpoint} : {ex.Message}"
+                    }
+                };
             }
         }
+
 
         /// <summary>
         /// Combines the query and variables based on the endpoint condition.
         /// </summary>
-        /// <param name="entityName">The entity name.</param>
-        /// <param name="effectiveDate">The effective date filter.</param>
-        /// <param name="endpoint">The endpoint to determine behavior.</param>
-        /// <returns>A tuple containing the query string and the query variables.</returns>
-        private (string query, object variables) GetQueryAndVariables(string entityName, DateTime? effectiveDate, string endpoint)
+        /// <param name="entityName"></param>
+        /// <param name="effectiveDate"></param>
+        /// <param name="existence"></param>
+        private (string query, object variables) GetQueryAndVariables(string? entityName, DateTime? effectiveDate, ParameterExistence existence)
         {
-            var variables = BuildQueryVariables(entityName, effectiveDate, endpoint);
-            var query = GetQueryBasedOnEndpoint(endpoint);
+            var variables = BuildQueryVariables(entityName, effectiveDate, existence);
+            var query = GetQuery(existence);
             return (query, variables);
         }
 
         /// <summary>
-        /// Builds the variables object for the GraphQL query.
-        /// Depending on the endpoint, it conditionally includes the effectiveDate parameter.
+        /// Work out which parameters exist by means of somewhat opaque process.
         /// </summary>
-        /// <param name="entityName">The entity name.</param>
-        /// <param name="effectiveDate">The effective date filter.</param>
-        /// <param name="endpoint">The endpoint name to determine behavior.</param>
-        /// <returns>An object with the query variables.</returns>
-        private object BuildQueryVariables(string entityName, DateTime? effectiveDate, string endpoint)
+        /// <param name="entityName"></param>
+        /// <param name="effectiveDate"></param>
+        /// <param name="endpoint"></param>
+        /// <returns></returns>
+        private ParameterExistence GetParameterExistence(string? entityName, DateTime? effectiveDate, string endpoint)
         {
-            // If the endpoint indicates that the effective date should be omitted,
-            // then only include the entityName in the query variables.
-            if (!string.IsNullOrWhiteSpace(endpoint) &&
-                endpoint.Contains("NoEffectiveDate", StringComparison.OrdinalIgnoreCase))
-            {
-                return new { entityName };
-            }
+            ParameterExistence entityNameExists = QueryHasNoEntityName(endpoint, entityName)
+                ? ParameterExistence.None
+                : ParameterExistence.EntityName;
 
-            // For other endpoints, include both entityName and effectiveDate.
-            return new { entityName, effectiveDate };
+            ParameterExistence effDateExists = QueryHasNoEffectiveDate(endpoint, effectiveDate)
+                ? ParameterExistence.None
+                : ParameterExistence.EffectiveDate;
+
+            return entityNameExists | effDateExists;
         }
 
         /// <summary>
-        /// Returns the appropriate GraphQL query based on the endpoint.
+        /// Builds the variables object for the GraphQL query.
         /// </summary>
-        /// <param name="endpoint">The endpoint to determine behavior.</param>
-        /// <returns>A GraphQL query string.</returns>
-        private string GetQueryBasedOnEndpoint(string endpoint)
+        /// <param name="entityNameNullable"></param>
+        /// <param name="effectiveDateNullable"></param>
+        /// <param name="existence"></param>
+        /// <returns></returns>
+        private object BuildQueryVariables(string? entityNameNullable, DateTime? effectiveDateNullable, ParameterExistence existence)
         {
-            // If the endpoint indicates that the effective date should be omitted, use the query without effectiveDate.
-            if (!string.IsNullOrWhiteSpace(endpoint) &&
-                endpoint.Contains("NoEffectiveDate", StringComparison.OrdinalIgnoreCase))
+            switch (existence)
             {
-                return DataLoadMatrixQueryWithoutEffectiveDate;
-            }
+                case ParameterExistence.None:
+                    // No parameters at all, return empty block
+                    return new { };
 
-            // Otherwise, return the default query which includes effectiveDate.
-            return DataLoadMatrixQuery;
+                case ParameterExistence.EntityName:
+                    {
+                        // EntityName only
+                        string entityName = entityNameNullable!;
+                        return new { entityName };
+                    }
+
+                case ParameterExistence.EffectiveDate:
+                    {
+                        // EffectiveDate only
+                        DateTime effectiveDate = effectiveDateNullable!.Value;
+                        return new { effectiveDate }; // Fragile method - this anonymous type MUST have name effectiveDate
+                    }
+
+                case ParameterExistence.EntityNameAndEffDate:
+                    {
+                        // Has entityName and effectiveDate
+                        string entityName = entityNameNullable!;
+                        DateTime effectiveDate = effectiveDateNullable!.Value;
+                        return new { entityName, effectiveDate };
+                    }
+
+                default:
+                    return null;
+            }
         }
+
+        /// <summary>
+        /// Get the correct query to match which variables we have.
+        /// TODO: It should be possible to build the query programmatically, but the GraphQL layer is different for each endpoint.
+        /// </summary>
+        private string GetQuery(ParameterExistence existence) =>
+            existence switch
+            {
+                ParameterExistence.None => DataLoadMatrixQueryNoParams,
+                ParameterExistence.EntityName => DataLoadMatrixQueryEntityName,
+                ParameterExistence.EffectiveDate => DataLoadMatrixQueryEffDate,
+                ParameterExistence.EntityNameAndEffDate => DataLoadMatrixQueryEntityNameEffDate,
+                _ => throw new ArgumentOutOfRangeException(nameof(existence), existence, null)
+            };
+
+        /// <summary>
+        /// Given the endpoint and the (nullable) effective date, determine whether the QueryHasNoEffectiveDate.
+        /// WARNING! Portfolios endpoint NEVER has an effective date even if you try to give it one.
+        /// TODO: Looking for the word "portfolios" is horrible and brittle; we need a better solution.
+        /// Note: Endpoint is not nullable, so we don't need the first test against null or whitespace.
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="effectiveDate"></param>
+        /// <returns></returns>
+        private static bool QueryHasNoEffectiveDate(string endpoint, DateTime? effectiveDate) =>
+            endpoint.Contains("portfolios", StringComparison.OrdinalIgnoreCase) || effectiveDate.HasValue;
+
+        /// <summary>
+        /// Same again
+        /// </summary>
+        private static bool QueryHasNoEntityName(string endpoint, string? entityName) => entityName == null;
+
     }
 }

@@ -8,5 +8,6 @@
         public int count { get; set; }
         public DateTime effectiveDate { get; set; }
         public string entityKey { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }
