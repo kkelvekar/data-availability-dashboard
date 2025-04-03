@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{6C876BF1
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.Application.Tests", "Tests\DaDashboard.Application.Tests\DaDashboard.Application.Tests.csproj", "{8A414CC6-2515-4E91-AB92-6840A60258D2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataLoadStatistics.API", "API\DataLoadStatistics.API\DataLoadStatistics.API.csproj", "{C10B1F37-E31A-49C3-96F4-D84B9DD9FCAF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{8A414CC6-2515-4E91-AB92-6840A60258D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A414CC6-2515-4E91-AB92-6840A60258D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A414CC6-2515-4E91-AB92-6840A60258D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C10B1F37-E31A-49C3-96F4-D84B9DD9FCAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C10B1F37-E31A-49C3-96F4-D84B9DD9FCAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C10B1F37-E31A-49C3-96F4-D84B9DD9FCAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C10B1F37-E31A-49C3-96F4-D84B9DD9FCAF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -84,5 +90,9 @@ Global
 		{CE05CB42-1661-4E84-A981-6FDA412885A7} = {4DAEB1F6-AA47-45CB-9749-5876DC010ACB}
 		{AA879DF0-313F-49B3-AEEA-77E6AC597F26} = {4DAEB1F6-AA47-45CB-9749-5876DC010ACB}
 		{8A414CC6-2515-4E91-AB92-6840A60258D2} = {6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}
+		{C10B1F37-E31A-49C3-96F4-D84B9DD9FCAF} = {4DAEB1F6-AA47-45CB-9749-5876DC010ACB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {47B2FF3E-1454-4B93-A473-A830389EAA6C}
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,6 @@
+@DataLoadStatistics.API_HostAddress = http://localhost:5192
+
+GET {{DataLoadStatistics.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
