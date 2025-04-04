@@ -30,5 +30,13 @@ namespace DaDashboard.API.Controllers
                                            })).ToList();
             return Ok(dataDomains);
         }
+
+        // New endpoint to call the GetBusinessEntitySummaryAsync method.
+        [HttpGet("business-entity-summary")]
+        public async Task<IActionResult> GetBusinessEntitySummary()
+        {
+            var summary = await _dataDomainOrchestrator.GetBusinessEntitySummaryAsync();
+            return Ok(summary);
+        }
     }
 }

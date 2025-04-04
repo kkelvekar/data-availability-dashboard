@@ -7,7 +7,6 @@ using DataLoadStatistics.API.DTO;
 
 namespace DataLoadStatistics.API.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     public class JobStatsController : ControllerBase
@@ -33,11 +32,14 @@ namespace DataLoadStatistics.API.Controllers
                     .ToList();
             }
 
-            // Filter by RecordAsOfDate if provided.
+            // Filter records by date range: from the provided RecordAsOfDate (lower bound)
+            // up to the current date (upper bound), comparing only the date portion.
             if (request.RecordAsOfDate.HasValue)
             {
+                DateTime lowerBound = request.RecordAsOfDate.Value.Date;
+                DateTime upperBound = DateTime.Today;
                 jobStatsList = jobStatsList
-                    .Where(js => js.RecordAsOfDate.Date == request.RecordAsOfDate.Value.Date)
+                    .Where(js => js.RecordAsOfDate.Date >= lowerBound && js.RecordAsOfDate.Date <= upperBound)
                     .ToList();
             }
 
