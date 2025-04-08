@@ -45,7 +45,7 @@ namespace DaDashboard.DataLoadStatistics.Service
 
             // Issue the GET request and deserialize the response into a list of JobStats.
             var response = await _httpClient.GetFromJsonAsync<List<JobStats>>(endpoint);
-            return response;
+            return response ?? new List<JobStats>();
         }
     }
 }

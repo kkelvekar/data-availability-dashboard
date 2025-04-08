@@ -94,19 +94,18 @@ namespace DaDashboard.Application.Features.Orchestrator
                     "Account Static: Internal Contracts"
                 };
 
-                // Set RecordAsOfDate to T-2 (or use AddDays(-3) for T-3).
-                var recordAsOfDate = DateTime.Today.AddDays(-2);
-
                 // Create the infrastructure-layer JobStatsRequest.
                 var infraRequest = new Models.Infrastructure.DataLoadStatistics.JobStatsRequest
                 {
                     BusinessEntities = staticBusinessEntities,
-                    RecordAsOfDate = recordAsOfDate
                 };
 
                 // Retrieve job stats from the infrastructure service.
                 var jobStats = await _jobStatsService.GetJobStatsAsync(infraRequest);
-
+              
+                // Print the job stats in a table format with color.
+                PrintJobStatsTable(jobStats);
+                
                 // Group job stats by BusinessEntity and build summary DTOs.
                 var summary = jobStats
                     .GroupBy(js => js.BusinessEntity)
@@ -128,5 +127,46 @@ namespace DaDashboard.Application.Features.Orchestrator
                 return Enumerable.Empty<BusinessEntitySummary>();
             }
         }
+
+        private void PrintJobStatsTable(List<Models.Infrastructure.DataLoadStatistics.JobStats> jobStats)
+        {
+            // Print header row in yellow.
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("{0,-40} {1,-12} {2,-8} {3,-8} {4,-10} {5,-12} {6,-12} {7,-10}",
+                "Business Entity", "Record As Of", "Job Start", "Job End", "Job Status", "Loaded", "Failed", "Quality");
+            Console.ResetColor();
+
+            // Print each job stats record.
+            foreach (var stats in jobStats)
+            {
+                // Color green if job was successful, else red.
+                if (stats.JobStatus.Equals("Success", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+
+                // Print each record using formatted output.
+                Console.WriteLine("{0,-40} {1,-12:yyyy-MM-dd} {2,-8:HH:mm} {3,-8:HH:mm} {4,-10} {5,-12} {6,-12} {7,-10}",
+                    stats.BusinessEntity,
+                    stats.RecordAsOfDate,
+                    stats.JobStart,
+                    stats.JobEnd,
+                    stats.JobStatus,
+                    stats.RecordLoaded,
+                    stats.RecordFailed,
+                    stats.QualityStatus);
+
+                Console.ResetColor();
+            }
+
+            // Extra line for readability.
+            Console.WriteLine();
+        }
+
+
     }
 }

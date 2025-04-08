@@ -24,6 +24,8 @@ namespace DataLoadStatistics.API.Controllers
             // Generate random job statistics records.
             var jobStatsList = JobStats.GenerateRandomJobStats();
 
+            JobStats.PrintJobStatsTable(jobStatsList);
+
             // Filter by business entities if provided.
             if (request.BusinessEntities != null && request.BusinessEntities.Any())
             {
@@ -32,18 +34,29 @@ namespace DataLoadStatistics.API.Controllers
                     .ToList();
             }
 
-            // Filter records by date range: from the provided RecordAsOfDate (lower bound)
-            // up to the current date (upper bound), comparing only the date portion.
-            if (request.RecordAsOfDate.HasValue)
-            {
-                DateTime lowerBound = request.RecordAsOfDate.Value.Date;
-                DateTime upperBound = DateTime.Today;
-                jobStatsList = jobStatsList
-                    .Where(js => js.RecordAsOfDate.Date >= lowerBound && js.RecordAsOfDate.Date <= upperBound)
-                    .ToList();
-            }
+            // Determine the reference date.
+            // If the client passes a RecordAsOfDate, use it; otherwise default to today's date.
+            DateTime selectedDate = request.RecordAsOfDate?.Date ?? DateTime.Today;
 
-            return Ok(jobStatsList);
+            // Only consider records on or before the selected date.
+            jobStatsList = jobStatsList
+                    .Where(js => js.RecordAsOfDate.Date <= selectedDate)
+                    .ToList();
+
+            // For each business entity, select the records that have the maximum available RecordAsOfDate.
+            // This returns a flat list that contains all rows corresponding to that "latest" date per entity.
+            var latestJobStats = jobStatsList
+                .GroupBy(js => js.BusinessEntity)
+                .SelectMany(group =>
+                {
+                    // Get the maximum RecordAsOfDate for this business entity as of selectedDate.
+                    var maxDate = group.Max(js => js.RecordAsOfDate);
+                    // Return all job stats for this business entity that have that date.
+                    return group.Where(js => js.RecordAsOfDate == maxDate);
+                })
+                .ToList();
+
+            return Ok(latestJobStats); ;
         }
     }
 }
