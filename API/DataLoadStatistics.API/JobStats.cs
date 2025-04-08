@@ -24,6 +24,7 @@ namespace DataLoadStatistics.API
             // Define the business entities.
             string[] businessEntities = new string[]
             {
+                "Benchmark",
                 "Account Static: Portfolios",
                 "Account Static: GIM SCD Mapping",
                 "Account Static: Strategies",
