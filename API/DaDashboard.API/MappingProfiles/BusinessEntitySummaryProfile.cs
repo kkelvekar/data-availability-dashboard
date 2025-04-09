@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using DaDashboard.API.DTO;
+using AutoMapper;
 using DaDashboard.Domain;
+using DaDashboard.API.DTO;
 
 namespace DaDashboard.API.MappingProfiles
 {
@@ -9,16 +9,8 @@ namespace DaDashboard.API.MappingProfiles
         public BusinessEntitySummaryProfile()
         {
             CreateMap<BusinessEntitySummary, BusinessEntitySummaryResponse>()
-                // Map BusinessEntityID to Id.
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.BusinessEntityID))
-                // Initialize DependentFuncs with an empty list.
-                .ForMember(dest => dest.DependentFuncs, opt => opt.MapFrom(src => new List<string>()))
-                // Initialize Status with default values (e.g., Green and an empty description).
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => new EntityStatus
-                {
-                    Indicator = RagIndicator.Green,
-                    Description = string.Empty
-                }));
+                .ForPath(dest => dest.Status.Indicator, opt => opt.MapFrom(src => src.Status.Indicator))
+                .ForPath(dest => dest.Status.Description, opt => opt.MapFrom(src => src.Status.Description));
         }
     }
 }

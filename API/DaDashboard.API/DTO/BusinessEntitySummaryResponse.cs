@@ -1,14 +1,16 @@
-﻿namespace DaDashboard.API.DTO
+using DaDashboard.Domain;
+
+namespace DaDashboard.API.DTO
 {
     public class BusinessEntitySummaryResponse
     {
         public Guid Id { get; set; }
-        public string ApplicationOwner { get; set; }
-        public string BusinessEntity { get; set; }
+        public string ApplicationOwner { get; set; } = null!;
+        public string BusinessEntity { get; set; } = null!;
         public DateTime LatestLoadDate { get; set; }
         public int TotalRecordsLoaded { get; set; }
-        public IEnumerable<string> DependentFuncs { get; set; }
-        public EntityStatus Status { get; set; }
+        public IEnumerable<string> DependentFuncs { get; set; } = new List<string>();
+        public EntityStatus Status { get; set; } = new();
     }
 
     public class EntityStatus

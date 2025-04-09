@@ -105,17 +105,28 @@ namespace DaDashboard.Application.Features.Orchestrator
               
                 // Print the job stats in a table format with color.
                 PrintJobStatsTable(jobStats);
-                
+
+                var random = new Random();
                 // Group job stats by BusinessEntity and build summary DTOs.
                 var summary = jobStats
                     .GroupBy(js => js.BusinessEntity)
                     .Select(g => new BusinessEntitySummary
                     {
-                        BusinessEntityID = Guid.NewGuid(), // Random GUID for now.
+                        Id = Guid.NewGuid(), // Random GUID for now.
                         ApplicationOwner = "Data Services",
                         BusinessEntity = g.Key,
                         LatestLoadDate = g.Max(js => js.RecordAsOfDate),
-                        TotalRecordsLoaded = g.Sum(js => js.RecordLoaded)
+                        TotalRecordsLoaded = g.Sum(js => js.RecordLoaded),
+                        DependentFuncs = new List<string>
+                        {
+                            "Portal", "Optimizer", "Currency",
+                            "Portfolio Services", "Strategy Manager"
+                        }.OrderBy(x => random.Next()).Take(random.Next(2, 5)),
+                        Status = new EntityStatus
+                        {
+                            Indicator = (RagIndicator)random.Next(0, 3),
+                            Description = $"Auto-generated status {random.Next(1000, 9999)}"
+                        }
                     })
                     .ToList();
 
