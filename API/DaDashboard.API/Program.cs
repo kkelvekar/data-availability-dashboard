@@ -3,6 +3,7 @@ using DaDashboard.DataSource.GraphQL;
 using DaDashboard.Persistence;
 using Azure.Identity;
 using DaDashboard.DataLoadStatistics.Service;
+using DaDashboard.API.MappingProfiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,10 @@ builder.Services.AddApplicationInsightsTelemetry(new Microsoft.ApplicationInsigh
 {
     ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
 });
+
+// Register AutoMapper by scanning the assembly for profiles.
+builder.Services.AddAutoMapper(typeof(BusinessEntitySummaryProfile));
+
 
 var app = builder.Build();
 
