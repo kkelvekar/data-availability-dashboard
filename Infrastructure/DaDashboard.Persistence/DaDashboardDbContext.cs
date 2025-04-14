@@ -9,8 +9,9 @@ namespace DaDashboard.Persistence
         {
         }
 
-        public DbSet<DataDomainConfig> DataDomainConfigs { get; set; }
-        public DbSet<DomainSourceTypeGraphQL> DomainSourceTypeGraphQLs { get; set; }
+        public DbSet<BusinessEntityConfig> BusinessEntityConfigs { get; set; }
+        public DbSet<BusinessEntityRAGConfig> BusinessEntityRAGConfigs { get; set; }
+        public DbSet<BusinessEntity> BusinessEntities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

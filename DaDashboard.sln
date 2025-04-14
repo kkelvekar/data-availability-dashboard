@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataLoadStatistics.API", "A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.DataLoadStatistics.Service", "Infrastructure\DaDashboard.DataLoadStatistics.Service\DaDashboard.DataLoadStatistics.Service.csproj", "{EA27CAE1-DBB8-4AC7-8F49-C942B5E09C93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.Persistence.Tests", "Tests\DaDashboard.Persistence.Tests\DaDashboard.Persistence.Tests.csproj", "{426AB930-1363-4A69-991C-52221D88C9B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,10 @@ Global
 		{EA27CAE1-DBB8-4AC7-8F49-C942B5E09C93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA27CAE1-DBB8-4AC7-8F49-C942B5E09C93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA27CAE1-DBB8-4AC7-8F49-C942B5E09C93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{426AB930-1363-4A69-991C-52221D88C9B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{426AB930-1363-4A69-991C-52221D88C9B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{426AB930-1363-4A69-991C-52221D88C9B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{426AB930-1363-4A69-991C-52221D88C9B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +97,7 @@ Global
 		{8A414CC6-2515-4E91-AB92-6840A60258D2} = {6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}
 		{C10B1F37-E31A-49C3-96F4-D84B9DD9FCAF} = {4DAEB1F6-AA47-45CB-9749-5876DC010ACB}
 		{EA27CAE1-DBB8-4AC7-8F49-C942B5E09C93} = {EEDBEBB3-CA58-4585-B5A0-4FF5EDDC9CD7}
+		{426AB930-1363-4A69-991C-52221D88C9B5} = {6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47B2FF3E-1454-4B93-A473-A830389EAA6C}

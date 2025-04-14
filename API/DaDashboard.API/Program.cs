@@ -1,5 +1,4 @@
 using DaDashboard.Application;
-using DaDashboard.DataSource.GraphQL;
 using DaDashboard.Persistence;
 using Azure.Identity;
 using DaDashboard.DataLoadStatistics.Service;
