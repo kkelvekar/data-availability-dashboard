@@ -19,22 +19,6 @@ namespace DaDashboard.API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("data-domain/{date}")]
-        public async Task<IActionResult> GetDataDomains(DateTime? date)
-        {
-            var dataDomains = await _dataDomainOrchestrator.GetDataDomainsAsync(date);
-            var responseList = dataDomains.SelectMany(domain =>
-            domain.Metrics.Select(metric => new DataDomainResponse
-                                           {
-                                               Id = domain.Id,
-                                               DomainName = domain.Name,
-                                               BusinessEntity = metric.EntityKey, // Map each metric's EntityKey
-                                               Count = metric.Count,
-                                               LoadDate = metric.Date
-                                           })).ToList();
-            return Ok(dataDomains);
-        }
-
         // New endpoint to call the GetBusinessEntitySummaryAsync method.
         [HttpGet("business-entity-summary")]
         public async Task<IActionResult> GetBusinessEntitySummary()

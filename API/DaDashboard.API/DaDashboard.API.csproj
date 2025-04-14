@@ -18,7 +18,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Core\DaDashboard.Application\DaDashboard.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\DaDashboard.DataLoadStatistics.Service\DaDashboard.DataLoadStatistics.Service.csproj" />
-    <ProjectReference Include="..\..\Infrastructure\DaDashboard.DataSource.GraphQL\DaDashboard.DataSource.GraphQL.csproj" />
     <ProjectReference Include="..\..\Infrastructure\DaDashboard.Persistence\DaDashboard.Persistence.csproj" />
   </ItemGroup>
 
