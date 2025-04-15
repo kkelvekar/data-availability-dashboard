@@ -2,7 +2,9 @@
 using DaDashboard.Application.Contracts.Infrastructure.DataLoadStatistics;
 using DaDashboard.Application.Contracts.Persistence;
 using DaDashboard.Domain;
+using DaDashboard.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace DaDashboard.Application.Features.Orchestrator
 {
@@ -57,11 +59,7 @@ namespace DaDashboard.Application.Features.Orchestrator
                         BusinessEntity = g.Key,
                         LatestLoadDate = g.Max(js => js.RecordAsOfDate),
                         TotalRecordsLoaded = g.Sum(js => js.RecordLoaded),
-                        DependentFuncs = new List<string>
-                        {
-                            "Portal", "Optimizer", "Currency",
-                            "Portfolio Services", "Strategy Manager"
-                        }.OrderBy(x => random.Next()).Take(random.Next(2, 5)),
+                        DependentFuncs = MapDependentFunctions(g.Key, activeBusinessEntities),
                         Status = new EntityStatus
                         {
                             Indicator = (RagIndicator)random.Next(0, 3),
@@ -79,45 +77,29 @@ namespace DaDashboard.Application.Features.Orchestrator
             }
         }
 
-        //private void PrintJobStatsTable(List<Models.Infrastructure.DataLoadStatistics.JobStats> jobStats)
-        //{
-        //    // Print header row in yellow.
-        //    Console.ForegroundColor = ConsoleColor.Yellow;
-        //    Console.WriteLine("{0,-40} {1,-12} {2,-8} {3,-8} {4,-10} {5,-12} {6,-12} {7,-10}",
-        //        "Business Entity", "Record As Of", "Job Start", "Job End", "Job Status", "Loaded", "Failed", "Quality");
-        //    Console.ResetColor();
+        /// <summary>
+        /// Maps the DependentFuncs list by using the business entity's name from JobStats to look up the corresponding
+        /// active business entity from the repository. It then converts its DependentFunctionalities string into a list of strings.
+        /// </summary>
+        /// <param name="businessEntityName">The business entity name from the job stats group key.</param>
+        /// <param name="activeEntities">The collection of active business entities from the repository.</param>
+        /// <returns>An enumerable list of dependent functionality names.</returns>
+        private IEnumerable<string> MapDependentFunctions(string businessEntityName, IEnumerable<BusinessEntity> activeEntities)
+        {
+            // Find the matching active business entity by comparing its Name property with the business entity name from the stats.
+            var matchingEntity = activeEntities
+                .FirstOrDefault(be => be.Name.Equals(businessEntityName, StringComparison.OrdinalIgnoreCase));
 
-        //    // Print each job stats record.
-        //    foreach (var stats in jobStats)
-        //    {
-        //        // Color green if job was successful, else red.
-        //        if (stats.JobStatus.Equals("Success", StringComparison.OrdinalIgnoreCase))
-        //        {
-        //            Console.ForegroundColor = ConsoleColor.Green;
-        //        }
-        //        else
-        //        {
-        //            Console.ForegroundColor = ConsoleColor.Red;
-        //        }
-
-        //        // Print each record using formatted output.
-        //        Console.WriteLine("{0,-40} {1,-12:yyyy-MM-dd} {2,-8:HH:mm} {3,-8:HH:mm} {4,-10} {5,-12} {6,-12} {7,-10}",
-        //            stats.BusinessEntity,
-        //            stats.RecordAsOfDate,
-        //            stats.JobStart,
-        //            stats.JobEnd,
-        //            stats.JobStatus,
-        //            stats.RecordLoaded,
-        //            stats.RecordFailed,
-        //            stats.QualityStatus);
-
-        //        Console.ResetColor();
-        //    }
-
-        //    // Extra line for readability.
-        //    Console.WriteLine();
-        //}
-
+            if (matchingEntity != null && !string.IsNullOrWhiteSpace(matchingEntity.DependentFunctionalities))
+            {
+                // Split the comma-separated values and trim whitespace.
+                return matchingEntity.DependentFunctionalities
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim());
+            }
+            // Return an empty list if no match is found or no dependent functionalities are provided.
+            return new List<string>();
+        }
 
     }
 }
