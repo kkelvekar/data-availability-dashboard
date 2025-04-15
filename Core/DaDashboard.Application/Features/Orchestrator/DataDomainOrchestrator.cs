@@ -24,19 +24,20 @@ namespace DaDashboard.Application.Features.Orchestrator
 
 
         /// <summary>
-        /// Consumes the JobStatsService to fetch job stats using a static list of business entities
-        /// and a RecordAsOfDate set to T-2 (or T-3), then groups them by BusinessEntity and returns a summary.
+        /// Retrieves active business entities from the repository, then consumes the JobStatsService 
+        /// to fetch job stats using the dynamically retrieved list of business entity names. The stats are 
+        /// grouped by BusinessEntity and summarized.
         /// </summary>
         /// <returns>A list of summarized job stats grouped by business entity.</returns>
         public async Task<IEnumerable<BusinessEntitySummary>> GetBusinessEntitySummaryAsync()
         {
             try
             {
-                // Retrieve active business entities from the repository.
+                // Retrieve active business entities and extract their names.
                 var activeBusinessEntities = await _businessEntityRepository.GetActiveBusinessEntitiesWithDetailsAsync();
                 var businessEntityNames = activeBusinessEntities.Select(be => be.Name).ToList();
 
-                // Create the infrastructure-layer JobStatsRequest.
+                // Create the JobStats request using the active business entity names.
                 var infraRequest = new Models.Infrastructure.DataLoadStatistics.JobStatsRequest
                 {
                     BusinessEntities = businessEntityNames
@@ -44,28 +45,11 @@ namespace DaDashboard.Application.Features.Orchestrator
 
                 // Retrieve job stats from the infrastructure service.
                 var jobStats = await _jobStatsService.GetJobStatsAsync(infraRequest);
-
-                // Print the job stats in a table format with color.
-                // PrintJobStatsTable(jobStats);
-
-                var random = new Random();
-                // Group job stats by BusinessEntity and build summary DTOs.
+               
+                // Group job stats by BusinessEntity and build summary DTOs using a dedicated helper.
                 var summary = jobStats
                     .GroupBy(js => js.BusinessEntity)
-                    .Select(g => new BusinessEntitySummary
-                    {
-                        Id = Guid.NewGuid(), // Random GUID for now.
-                        ApplicationOwner = "Data Services",
-                        BusinessEntity = g.Key,
-                        LatestLoadDate = g.Max(js => js.RecordAsOfDate),
-                        TotalRecordsLoaded = g.Sum(js => js.RecordLoaded),
-                        DependentFuncs = MapDependentFunctions(g.Key, activeBusinessEntities),
-                        Status = new EntityStatus
-                        {
-                            Indicator = (RagIndicator)random.Next(0, 3),
-                            Description = $"Auto-generated status {random.Next(1000, 9999)}"
-                        }
-                    })
+                    .Select(group => BuildBusinessEntitySummary(group.Key, group, activeBusinessEntities))
                     .ToList();
 
                 return summary;
@@ -78,27 +62,56 @@ namespace DaDashboard.Application.Features.Orchestrator
         }
 
         /// <summary>
-        /// Maps the DependentFuncs list by using the business entity's name from JobStats to look up the corresponding
-        /// active business entity from the repository. It then converts its DependentFunctionalities string into a list of strings.
+        /// Builds a BusinessEntitySummary for a given business entity by mapping properties
+        /// from the corresponding active BusinessEntity and aggregating job statistics.
         /// </summary>
-        /// <param name="businessEntityName">The business entity name from the job stats group key.</param>
-        /// <param name="activeEntities">The collection of active business entities from the repository.</param>
-        /// <returns>An enumerable list of dependent functionality names.</returns>
-        private IEnumerable<string> MapDependentFunctions(string businessEntityName, IEnumerable<BusinessEntity> activeEntities)
+        /// <param name="businessEntityName">The business entity name from the JobStats group key.</param>
+        /// <param name="jobStatsGroup">The grouped JobStats for the business entity.</param>
+        /// <param name="activeEntities">The collection of active business entities.</param>
+        /// <param name="random">A Random instance for generating random selections.</param>
+        /// <returns>A populated BusinessEntitySummary object.</returns>
+        private BusinessEntitySummary BuildBusinessEntitySummary(
+            string businessEntityName,
+            IGrouping<string, Models.Infrastructure.DataLoadStatistics.JobStats> jobStatsGroup,
+            IEnumerable<BusinessEntity> activeEntities)
         {
-            // Find the matching active business entity by comparing its Name property with the business entity name from the stats.
-            var matchingEntity = activeEntities
-                .FirstOrDefault(be => be.Name.Equals(businessEntityName, StringComparison.OrdinalIgnoreCase));
+            var random = new Random();
+            var matchingEntity = GetBusinessEntityDetails(businessEntityName, activeEntities);
+            var applicationOwner = matchingEntity?.ApplicationOwner ?? string.Empty;
 
-            if (matchingEntity != null && !string.IsNullOrWhiteSpace(matchingEntity.DependentFunctionalities))
-            {
-                // Split the comma-separated values and trim whitespace.
-                return matchingEntity.DependentFunctionalities
+            // Split the comma-separated string of dependent functionalities.
+            var dependentFuncs = matchingEntity != null && !string.IsNullOrWhiteSpace(matchingEntity.DependentFunctionalities)
+                ? matchingEntity.DependentFunctionalities
                     .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(s => s.Trim());
-            }
-            // Return an empty list if no match is found or no dependent functionalities are provided.
-            return new List<string>();
+                    .Select(s => s.Trim())
+                : Enumerable.Empty<string>();
+
+            return new BusinessEntitySummary
+            {
+                Id = Guid.NewGuid(),
+                ApplicationOwner = applicationOwner,
+                BusinessEntity = businessEntityName,
+                LatestLoadDate = jobStatsGroup.Max(js => js.RecordAsOfDate),
+                TotalRecordsLoaded = jobStatsGroup.Sum(js => js.RecordLoaded),
+                DependentFuncs = dependentFuncs,
+                Status = new EntityStatus
+                {
+                    Indicator = (RagIndicator)random.Next(0, 3),
+                    Description = $"Auto-generated status {random.Next(1000, 9999)}"
+                }
+            };
+        }
+
+        /// <summary>
+        /// Retrieves the corresponding active BusinessEntity based on the given business entity name.
+        /// </summary>
+        /// <param name="businessEntityName">The business entity name from the JobStats group key.</param>
+        /// <param name="activeEntities">The collection of active BusinessEntity objects from the repository.</param>
+        /// <returns>The matching BusinessEntity if found; otherwise, null.</returns>
+        private BusinessEntity? GetBusinessEntityDetails(string businessEntityName, IEnumerable<BusinessEntity> activeEntities)
+        {
+            return activeEntities
+                .FirstOrDefault(be => be.Name.Equals(businessEntityName, StringComparison.OrdinalIgnoreCase));
         }
 
     }
