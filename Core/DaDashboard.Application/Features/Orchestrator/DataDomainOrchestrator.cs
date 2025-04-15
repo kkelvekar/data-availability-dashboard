@@ -1,5 +1,6 @@
 ﻿using DaDashboard.Application.Contracts.Application;
 using DaDashboard.Application.Contracts.Infrastructure.DataLoadStatistics;
+using DaDashboard.Application.Contracts.Persistence;
 using DaDashboard.Domain;
 using Microsoft.Extensions.Logging;
 
@@ -8,13 +9,14 @@ namespace DaDashboard.Application.Features.Orchestrator
     public class DataDomainOrchestrator : IDataDomainOrchestrator
     {
         private readonly IJobStatsService _jobStatsService;
+        private readonly IBusinessEntityRepository _businessEntityRepository;
         private readonly ILogger<DataDomainOrchestrator> _logger;
 
         public DataDomainOrchestrator(
-            IJobStatsService jobStatsService,
-            ILogger<DataDomainOrchestrator> logger)
+            IJobStatsService jobStatsService, IBusinessEntityRepository businessEntityRepository, ILogger<DataDomainOrchestrator> logger)
         {
             _jobStatsService = jobStatsService;
+            _businessEntityRepository = businessEntityRepository;
             _logger = logger;
         }
 
@@ -28,29 +30,14 @@ namespace DaDashboard.Application.Features.Orchestrator
         {
             try
             {
-                // Define a static list of business entities.
-                var staticBusinessEntities = new List<string>
-                {
-                    "Account Static: Bank Accounts",
-                    "Account Static: GIN SOO Mapping",
-                    "Account Static: Internal Contacts",
-                    "Account Static: Portfolios",
-                    "Account Static: Strategies",
-                    "Benchmark",
-                    "Benchmarks: Composition",
-                    "Benchmarks: Weight Allocation",
-                    "FI Analytics: Benchmark Holding",
-                    "FI Analytics: Portfolio Holding",
-                    "FX Rate",
-                    "Securities",
-                    "Security Pricing",
-                    "Transactions"
-                };
+                // Retrieve active business entities from the repository.
+                var activeBusinessEntities = await _businessEntityRepository.GetActiveBusinessEntitiesWithDetailsAsync();
+                var businessEntityNames = activeBusinessEntities.Select(be => be.Name).ToList();
 
                 // Create the infrastructure-layer JobStatsRequest.
                 var infraRequest = new Models.Infrastructure.DataLoadStatistics.JobStatsRequest
                 {
-                    BusinessEntities = staticBusinessEntities,
+                    BusinessEntities = businessEntityNames
                 };
 
                 // Retrieve job stats from the infrastructure service.

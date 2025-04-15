@@ -13,6 +13,8 @@ namespace DaDashboard.Persistence
             services.AddDbContext<DaDashboardDbContext>(options =>
                options.UseSqlServer(configuration.GetConnectionString("DaDashboardDb")), ServiceLifetime.Transient);
 
+            services.AddScoped<IBusinessEntityRepository, BusinessEntityRepository>();
+
             services.AddScoped(typeof(IAsyncRepository<>), typeof(BaseRepository<>));
            
             return services;
