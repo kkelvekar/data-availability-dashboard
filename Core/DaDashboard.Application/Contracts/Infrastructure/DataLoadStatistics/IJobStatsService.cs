@@ -3,6 +3,6 @@ namespace DaDashboard.Application.Contracts.Infrastructure.DataLoadStatistics
 {
     public interface IJobStatsService
     {
-        Task<List<JobStats>> GetJobStatsAsync(Models.Infrastructure.DataLoadStatistics.JobStatsRequest filter);
+        Task<List<JobStats>> GetJobStatsAsync(JobStatsRequest filter, string baseURL);
     }
 }

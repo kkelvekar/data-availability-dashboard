@@ -15,8 +15,9 @@ namespace DaDashboard.DataLoadStatistics.Service
             _httpClient = httpClientFactory.CreateClient("JobStatsClient");
         }
 
-        public async Task<List<JobStats>> GetJobStatsAsync(JobStatsRequest filter)
+        public async Task<List<JobStats>> GetJobStatsAsync(JobStatsRequest filter, string baseURL)
         {
+            _httpClient.BaseAddress = new Uri(baseURL); // Set the base address for the HttpClient.
             // Base endpoint for the API.
             string endpoint = "api/JobStats";
             var queryParams = new List<string>();

@@ -10,14 +10,15 @@ namespace DaDashboard.Application.Features.Orchestrator
 {
     public class DataDomainOrchestrator : IDataDomainOrchestrator
     {
-        private readonly IJobStatsService _jobStatsService;
+        private readonly JobStatsStrategyFactory _strategyFactory;
         private readonly IBusinessEntityRepository _businessEntityRepository;
         private readonly ILogger<DataDomainOrchestrator> _logger;
 
-        public DataDomainOrchestrator(
-            IJobStatsService jobStatsService, IBusinessEntityRepository businessEntityRepository, ILogger<DataDomainOrchestrator> logger)
+        public DataDomainOrchestrator(JobStatsStrategyFactory strategyFactory,
+                                      IBusinessEntityRepository businessEntityRepository,
+                                      ILogger<DataDomainOrchestrator> logger)
         {
-            _jobStatsService = jobStatsService;
+            _strategyFactory = strategyFactory;
             _businessEntityRepository = businessEntityRepository;
             _logger = logger;
         }
@@ -35,19 +36,23 @@ namespace DaDashboard.Application.Features.Orchestrator
             {
                 // Retrieve active business entities and extract their names.
                 var activeBusinessEntities = await _businessEntityRepository.GetActiveBusinessEntitiesWithDetailsAsync();
-                var businessEntityNames = activeBusinessEntities.Select(be => be.Name).ToList();
+                var allStats = new List<Models.Infrastructure.DataLoadStatistics.JobStats>();
+                var businessEntityConfigGroups = activeBusinessEntities.GroupBy(be => be.BusinessEntityConfig);
 
-                // Create the JobStats request using the active business entity names.
-                var infraRequest = new Models.Infrastructure.DataLoadStatistics.JobStatsRequest
-                {
-                    BusinessEntities = businessEntityNames
-                };
+                foreach (var businessEntityConfigGroup in businessEntityConfigGroups)
+                {               
+                    var serviceName = businessEntityConfigGroup.Key.Name;
 
-                // Retrieve job stats from the infrastructure service.
-                var jobStats = await _jobStatsService.GetJobStatsAsync(infraRequest);
-               
+                    // lookup strategy by its Name property
+                    var strat = _strategyFactory.GetStrategy(serviceName);
+
+                    // fetch stats for *this* group
+                    var stats = await strat.GetJobStatsAsync(businessEntityConfigGroup);
+                    allStats.AddRange(stats);
+                }
+         
                 // Group job stats by BusinessEntity and build summary DTOs using a dedicated helper.
-                var summary = jobStats
+                var summary = allStats
                     .GroupBy(js => js.BusinessEntity)
                     .Select(group => BuildBusinessEntitySummary(group.Key, group, activeBusinessEntities))
                     .ToList();
