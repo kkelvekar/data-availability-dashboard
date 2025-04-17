@@ -74,28 +74,20 @@ namespace DaDashboard.DataLoadStatistics.Service
         /// </summary>
         private static Uri BuildUri(string baseUrl, JobStatsRequest filter)
         {
-            baseUrl = baseUrl.TrimEnd('/') + "/";
-            var uriBuilder = new UriBuilder(new Uri(baseUrl))
-            {
-                Path = "api/JobStats",
-                Query = string.Join("&",
-                    filter.RecordAsOfDate.HasValue
-                        ? new[] { $"RecordAsOfDate={Uri.EscapeDataString(filter.RecordAsOfDate.Value.ToString("o"))}" }
-                        : Array.Empty<string>()
-                )
-            };
+            var baseUri = new Uri(baseUrl.EndsWith('/') ? baseUrl : baseUrl + '/', UriKind.Absolute);
 
-            var entityParams = filter.BusinessEntities
-                .Select(e => $"BusinessEntities={Uri.EscapeDataString(e)}");
+            var queryParts = new List<string>();
+            if (filter.RecordAsOfDate.HasValue)
+                queryParts.Add($"RecordAsOfDate={Uri.EscapeDataString(filter.RecordAsOfDate.Value.ToString("o"))}");
 
-            var allParams = string.Join("&",
-                new[] { uriBuilder.Query.TrimStart('?') }
-                .Concat(entityParams)
-                .Where(q => !string.IsNullOrEmpty(q))
-            );
+            queryParts.AddRange(filter.BusinessEntities
+                .Select(e => $"BusinessEntities={Uri.EscapeDataString(e)}"));
 
-            uriBuilder.Query = allParams;
-            return uriBuilder.Uri;
+            var queryString = queryParts.Count > 0
+                ? "?" + string.Join("&", queryParts)
+                : string.Empty;
+
+            return new Uri(baseUri, "api/JobStats" + queryString);
         }
     }
 }
