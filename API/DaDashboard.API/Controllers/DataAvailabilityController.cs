@@ -12,24 +12,32 @@ namespace DaDashboard.API.Controllers
     {
         private readonly IDataDomainOrchestrator _dataDomainOrchestrator;
         private readonly IMapper _mapper;
+        private readonly ILogger<DataAvailabilityController> _logger;
 
-        public DataAvailabilityController(IDataDomainOrchestrator dataDomainOrchestrator, IMapper mapper)
+        public DataAvailabilityController(IDataDomainOrchestrator dataDomainOrchestrator, IMapper mapper, ILogger<DataAvailabilityController> logger)
         {
             _dataDomainOrchestrator = dataDomainOrchestrator;
             _mapper = mapper;
+            _logger = logger;
         }
 
-        // New endpoint to call the GetBusinessEntitySummaryAsync method.
         [HttpGet("business-entity-summary")]
         public async Task<IActionResult> GetBusinessEntitySummary()
         {
-            // Retrieve the domain model results.
-            var domainSummaries = await _dataDomainOrchestrator.GetBusinessEntitySummaryAsync();
-
-            // Use AutoMapper to map the domain models to the API DTO.
-            var response = _mapper.Map<IEnumerable<BusinessEntitySummaryResponse>>(domainSummaries);
-
-            return Ok(response);
+            try
+            {
+                var summaries = await _dataDomainOrchestrator.GetBusinessEntitySummaryAsync();
+                var response = _mapper.Map<IEnumerable<BusinessEntitySummaryResponse>>(summaries);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to retrieve business entity summary");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new { Error = "An error occurred while processing your request." }
+                );
+            }
         }
     }
 }

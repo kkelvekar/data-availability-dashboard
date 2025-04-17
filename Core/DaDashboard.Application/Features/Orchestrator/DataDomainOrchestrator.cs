@@ -62,7 +62,7 @@ namespace DaDashboard.Application.Features.Orchestrator
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while retrieving the JobStats summary.");
-                return Enumerable.Empty<BusinessEntitySummary>();
+                throw;
             }
         }
 
