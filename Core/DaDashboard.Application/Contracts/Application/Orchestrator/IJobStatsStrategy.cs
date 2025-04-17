@@ -8,11 +8,12 @@ namespace DaDashboard.Application.Contracts.Application.Orchestrator
         /// <summary>
         /// Unique name used to look up this strategy in the factory.
         /// </summary>
-        string Name { get; }
+        string StrategyName { get; }
 
         /// <summary>
         /// Given a set of BusinessEntity objects, fetches their JobStats.
         /// </summary>
         Task<List<JobStats>> GetJobStatsAsync(IEnumerable<BusinessEntity> businessEntities);
+        Task<List<JobStats>> GetJobStatsAsync(BusinessEntity entity, DateTime recordAsOfDate);
     }
 }
