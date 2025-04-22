@@ -8,12 +8,21 @@ using System.Text.Json;
 
 namespace DaDashboard.Application.Features.Orchestrator
 {
+    /// <summary>
+    /// Orchestrates retrieval and aggregation of business entity summaries by delegating job stats retrieval to appropriate strategies.
+    /// </summary>
     public class DataDomainOrchestrator : IDataDomainOrchestrator
     {
         private readonly JobStatsStrategyFactory _strategyFactory;
         private readonly IBusinessEntityRepository _businessEntityRepository;
         private readonly ILogger<DataDomainOrchestrator> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DataDomainOrchestrator"/> class.
+        /// </summary>
+        /// <param name="strategyFactory">Factory to resolve job stats strategies by name.</param>
+        /// <param name="businessEntityRepository">Repository for retrieving active business entities.</param>
+        /// <param name="logger">Logger instance for diagnostic messages.</param>
         public DataDomainOrchestrator(JobStatsStrategyFactory strategyFactory,
                                       IBusinessEntityRepository businessEntityRepository,
                                       ILogger<DataDomainOrchestrator> logger)

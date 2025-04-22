@@ -7,19 +7,29 @@ using DaDashboard.Domain.Entities;
 
 namespace DaDashboard.Application.Features.Orchestrator
 {
+    /// <summary>
+    /// Factory responsible for resolving <see cref="IJobStatsStrategy"/> implementations by strategy name.
+    /// </summary>
     public class JobStatsStrategyFactory
     {
         private readonly IEnumerable<IJobStatsStrategy> _strategies;
 
         // DI will give us *all* IJobStatsStrategy implementations
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JobStatsStrategyFactory"/> class with the provided strategies.
+        /// </summary>
+        /// <param name="strategies">All available implementations of <see cref="IJobStatsStrategy"/> injected via DI.</param>
         public JobStatsStrategyFactory(IEnumerable<IJobStatsStrategy> strategies)
         {
             _strategies = strategies;
         }
 
         /// <summary>
-        /// Looks up the strategy instance by its Name property.
+        /// Retrieves the registered job stats strategy matching the specified name (case-insensitive).
         /// </summary>
+        /// <param name="strategyName">The name identifying the desired strategy.</param>
+        /// <returns>The matching <see cref="IJobStatsStrategy"/> instance.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if no matching strategy is registered.</exception>
         public IJobStatsStrategy GetStrategy(string strategyName)
         {
             var strat = _strategies

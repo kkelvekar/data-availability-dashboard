@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace DaDashboard.Application.Models.Infrastructure.DataLoadStatistics
 {
+    /// <summary>
+    /// Represents statistics and metadata for a data load job of a business entity.
+    /// </summary>
     public class JobStats
     {
         public Guid Id { get; set; }
