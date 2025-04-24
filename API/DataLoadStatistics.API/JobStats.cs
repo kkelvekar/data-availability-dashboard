@@ -24,20 +24,20 @@ namespace DataLoadStatistics.API
             // Define the business entities.
             string[] businessEntities = new string[]
             {
-        "Account Static: Bank Accounts",
-        "Account Static: GIN SOO Mapping",
-        "Account Static: Internal Contacts",
-        "Account Static: Portfolios",
-        "Account Static: Strategies",
-        "Benchmark",
-        "Benchmarks: Composition",
-        "Benchmarks: Weight Allocation",
-        "FI Analytics: Benchmark Holding",
-        "FI Analytics: Portfolio Holding",
-        "FX Rate",
-        "Securities",
-        "Security Pricing",
-        "Transactions"
+                "Account Static: Bank Accounts",
+                "Account Static: GIN SOO Mapping",
+                "Account Static: Internal Contacts",
+                "Account Static: Portfolios",
+                "Account Static: Strategies",
+                "Benchmark",
+                "Benchmarks: Composition",
+                "Benchmarks: Weight Allocation",
+                "FI Analytics: Benchmark Holding",
+                "FI Analytics: Portfolio Holding",
+                "FX Rate",
+                "Securities",
+                "Security Pricing",
+                "Transactions"
             };
 
             var rng = new Random();
