@@ -21,8 +21,10 @@ namespace DataLoadStatistics.API.Controllers
         [HttpGet]
         public IActionResult GetJobStats([FromQuery] JobStatsFilterRequest request)
         {
-            // Generate random job statistics records.
-            var jobStatsList = JobStats.GenerateRandomJobStats();
+            // Determine the reference date (RecordAsOfDate filter); default to today if not provided.
+            DateTime selectedDate = request.RecordAsOfDate?.Date ?? DateTime.Today;
+            // Generate static job statistics records for the given date.
+            var jobStatsList = JobStats.GenerateRandomJobStats(selectedDate);
 
             JobStats.PrintJobStatsTable(jobStatsList);
 
@@ -34,14 +36,6 @@ namespace DataLoadStatistics.API.Controllers
                     .ToList();
             }
 
-            // Determine the reference date.
-            // If the client passes a RecordAsOfDate, use it; otherwise default to today's date.
-            DateTime selectedDate = request.RecordAsOfDate?.Date ?? DateTime.Today;
-
-            // Only consider records on or before the selected date.
-            jobStatsList = jobStatsList
-                    .Where(js => js.RecordAsOfDate.Date <= selectedDate)
-                    .ToList();
 
             // For each business entity, select the records that have the maximum available RecordAsOfDate.
             // This returns a flat list that contains all rows corresponding to that "latest" date per entity.

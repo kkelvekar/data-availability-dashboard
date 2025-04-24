@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.Persistence.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.DataLoadStatistics.Service.Tests", "Tests\DaDashboard.DataLoadStatistics.Service.Tests\DaDashboard.DataLoadStatistics.Service.Tests.csproj", "{8C922EEB-ACBE-4066-BE55-A58198BF634E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaDashboard.DataLoadStatistics.API.Tests", "Tests\DaDashboard.DataLoadStatistics.API.Tests\DaDashboard.DataLoadStatistics.API.Tests.csproj", "{50497B33-08F9-47CB-970E-3EEDD5E282E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -181,6 +183,18 @@ Global
 		{8C922EEB-ACBE-4066-BE55-A58198BF634E}.Release|x64.Build.0 = Release|Any CPU
 		{8C922EEB-ACBE-4066-BE55-A58198BF634E}.Release|x86.ActiveCfg = Release|Any CPU
 		{8C922EEB-ACBE-4066-BE55-A58198BF634E}.Release|x86.Build.0 = Release|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Debug|x64.Build.0 = Debug|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Debug|x86.Build.0 = Debug|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Release|x64.ActiveCfg = Release|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Release|x64.Build.0 = Release|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Release|x86.ActiveCfg = Release|Any CPU
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -197,6 +211,7 @@ Global
 		{EA27CAE1-DBB8-4AC7-8F49-C942B5E09C93} = {EEDBEBB3-CA58-4585-B5A0-4FF5EDDC9CD7}
 		{426AB930-1363-4A69-991C-52221D88C9B5} = {6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}
 		{8C922EEB-ACBE-4066-BE55-A58198BF634E} = {6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}
+		{50497B33-08F9-47CB-970E-3EEDD5E282E8} = {6C876BF1-55A9-44AE-BBD3-AF1CBF26D650}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {47B2FF3E-1454-4B93-A473-A830389EAA6C}
