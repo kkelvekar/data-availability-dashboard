@@ -7,7 +7,7 @@ namespace DaDashboard.API.DTO
         public Guid Id { get; set; }
         public string ApplicationOwner { get; set; } = null!;
         public string BusinessEntity { get; set; } = null!;
-        public DateTime LatestLoadDate { get; set; }
+        public DateOnly LatestLoadDate { get; set; }
         public int TotalRecordsLoaded { get; set; }
         public IEnumerable<string> DependentFuncs { get; set; } = new List<string>();
         public EntityStatus Status { get; set; } = new();

@@ -9,6 +9,7 @@ namespace DaDashboard.API.MappingProfiles
         public BusinessEntitySummaryProfile()
         {
             CreateMap<BusinessEntitySummary, BusinessEntitySummaryResponse>()
+                .ForMember(dest => dest.LatestLoadDate, opt => opt.MapFrom(src => DateOnly.FromDateTime(src.LatestLoadDate)))
                 .ForPath(dest => dest.Status.Indicator, opt => opt.MapFrom(src => src.Status.Indicator))
                 .ForPath(dest => dest.Status.Description, opt => opt.MapFrom(src => src.Status.Description));
         }
