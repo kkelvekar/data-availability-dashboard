@@ -24,20 +24,20 @@ namespace DataLoadStatistics.API
             // Define the business entities.
             string[] businessEntities = new string[]
             {
-                "Account Static: Bank Accounts",
-                "Account Static: GIN SOO Mapping",
-                "Account Static: Internal Contacts",
-                "Account Static: Portfolios",
-                "Account Static: Strategies",
-                "Benchmark",
-                "Benchmarks: Composition",
-                "Benchmarks: Weight Allocation",
-                "FI Analytics: Benchmark Holding",
-                "FI Analytics: Portfolio Holding",
-                "FX Rate",
-                "Securities",
-                "Security Pricing",
-                "Transactions"
+        "Account Static: Bank Accounts",
+        "Account Static: GIN SOO Mapping",
+        "Account Static: Internal Contacts",
+        "Account Static: Portfolios",
+        "Account Static: Strategies",
+        "Benchmark",
+        "Benchmarks: Composition",
+        "Benchmarks: Weight Allocation",
+        "FI Analytics: Benchmark Holding",
+        "FI Analytics: Portfolio Holding",
+        "FX Rate",
+        "Securities",
+        "Security Pricing",
+        "Transactions"
             };
 
             var rng = new Random();
@@ -46,21 +46,33 @@ namespace DataLoadStatistics.API
             {
                 // Determine how many records to generate (5 to 20).
                 int recordCount = rng.Next(5, 21);
+                // Ensure at least 3-4 records use the provided date
+                int minProvidedCount = rng.Next(5, 10);
 
                 for (int j = 0; j < recordCount; j++)
                 {
-                    // Randomly decide if this record uses the provided date or an older date (>1 month ago)
+                    // Decide RecordAsOfDate: guarantee the first minProvidedCount use provided date
                     DateTime asOfDate;
-                    if (rng.NextDouble() < 0.5)
+                    if (j < minProvidedCount)
                     {
                         asOfDate = recordAsOfDate;
                     }
                     else
                     {
-                        // At least one month older, up to 6 months older
-                        int monthsBack = rng.Next(1, 7);
-                        int day = rng.Next(1, DateTime.DaysInMonth(recordAsOfDate.Year, recordAsOfDate.Month) + 1);
-                        asOfDate = recordAsOfDate.AddMonths(-monthsBack).AddDays(day - recordAsOfDate.Day);
+                        // 50% chance to use provided date thereafter
+                        if (rng.NextDouble() < 0.5)
+                        {
+                            asOfDate = recordAsOfDate;
+                        }
+                        else
+                        {
+                            // Older date: 1 to 6 months back
+                            int monthsBack = rng.Next(1, 7);
+                            var targetMonth = recordAsOfDate.AddMonths(-monthsBack);
+                            int daysInMonth = DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month);
+                            int day = rng.Next(1, daysInMonth + 1);
+                            asOfDate = new DateTime(targetMonth.Year, targetMonth.Month, day);
+                        }
                     }
 
                     // Schedule job start times between 00:00 and 23:30
@@ -94,7 +106,6 @@ namespace DataLoadStatistics.API
 
             return statsList;
         }
-
 
         /// <summary>
         /// Prints a colorized table of job stats to the console.
