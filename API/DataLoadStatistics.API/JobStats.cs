@@ -17,11 +17,6 @@ namespace DataLoadStatistics.API
         public int RecordLoaded { get; set; }
         public int RecordFailed { get; set; }
 
-        /// <summary>
-        /// Generates a static list of JobStats records for each business entity,
-        /// assigning the provided date as the RecordAsOfDate. Each entity has exactly 5 records.
-        /// </summary>
-        /// <param name="recordAsOfDate">The date to assign to each record's RecordAsOfDate.</param>
         public static List<JobStats> GenerateRandomJobStats(DateTime recordAsOfDate)
         {
             var statsList = new List<JobStats>();
@@ -45,23 +40,42 @@ namespace DataLoadStatistics.API
                 "Transactions"
             };
 
-            // For each entity, generate 5 deterministic records
-            for (int i = 0; i < businessEntities.Length; i++)
-            {
-                var entity = businessEntities[i];
-                for (int j = 0; j < 5; j++)
-                {
-                    // Schedule job start times at 9:00, 10:00, ..., 13:00
-                    int hour = 9 + j;
-                    DateTime jobStart = new DateTime(recordAsOfDate.Year, recordAsOfDate.Month, recordAsOfDate.Day, hour, 0, 0);
-                    DateTime jobEnd = jobStart.AddMinutes(30);
+            var rng = new Random();
 
-                    bool isSuccess = (j % 2 == 0);
+            foreach (var entity in businessEntities)
+            {
+                // Determine how many records to generate (5 to 20).
+                int recordCount = rng.Next(5, 21);
+
+                for (int j = 0; j < recordCount; j++)
+                {
+                    // Randomly decide if this record uses the provided date or an older date (>1 month ago)
+                    DateTime asOfDate;
+                    if (rng.NextDouble() < 0.5)
+                    {
+                        asOfDate = recordAsOfDate;
+                    }
+                    else
+                    {
+                        // At least one month older, up to 6 months older
+                        int monthsBack = rng.Next(1, 7);
+                        int day = rng.Next(1, DateTime.DaysInMonth(recordAsOfDate.Year, recordAsOfDate.Month) + 1);
+                        asOfDate = recordAsOfDate.AddMonths(-monthsBack).AddDays(day - recordAsOfDate.Day);
+                    }
+
+                    // Schedule job start times between 00:00 and 23:30
+                    int hour = rng.Next(0, 24);
+                    int minute = rng.Next(0, 2) * 30; // 0 or 30
+                    DateTime jobStart = new DateTime(asOfDate.Year, asOfDate.Month, asOfDate.Day, hour, minute, 0);
+                    DateTime jobEnd = jobStart.AddMinutes(rng.Next(15, 61)); // Duration 15 to 60 mins
+
+                    bool isSuccess = rng.NextDouble() < 0.8; // 80% success rate
                     string jobStatus = isSuccess ? "Success" : "Failure";
                     string qualityStatus = isSuccess ? "Pass" : "Fail";
-                    // Vary the loaded record count per entity to ensure different totals
-                    int recordLoaded = isSuccess ? (100 + j * 10 + i * 10) : 0;
-                    int recordFailed = isSuccess ? 0 : (10 + j * 2);
+
+                    // Random loaded count between 10 and 3000; if failure, loaded = 0
+                    int recordLoaded = isSuccess ? rng.Next(10, 3001) : 0;
+                    int recordFailed = isSuccess ? 0 : rng.Next(1, 101);
 
                     statsList.Add(new JobStats
                     {
@@ -70,7 +84,7 @@ namespace DataLoadStatistics.API
                         JobStart = jobStart,
                         JobEnd = jobEnd,
                         JobStatus = jobStatus,
-                        RecordAsOfDate = recordAsOfDate,
+                        RecordAsOfDate = asOfDate,
                         QualityStatus = qualityStatus,
                         RecordLoaded = recordLoaded,
                         RecordFailed = recordFailed
@@ -80,6 +94,7 @@ namespace DataLoadStatistics.API
 
             return statsList;
         }
+
 
         /// <summary>
         /// Prints a colorized table of job stats to the console.
