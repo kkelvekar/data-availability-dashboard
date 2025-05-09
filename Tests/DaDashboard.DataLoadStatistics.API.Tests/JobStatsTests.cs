@@ -22,7 +22,7 @@ namespace DaDashboard.DataLoadStatistics.API.Tests
             const int recordsPerEntity = 5;
             int expectedCount = expectedEntities * recordsPerEntity;
             Assert.AreEqual(expectedCount, stats.Count, $"Expected {expectedCount} records but found {stats.Count}");
-            Assert.IsTrue(stats.All(s => s.RecordAsOfDate == date), "All records should have the provided RecordAsOfDate");
+            Assert.IsTrue(stats.All(s => s.RecordAsOfDate == date), "All records should have the provided ReferenceDate");
         }
     }
 }

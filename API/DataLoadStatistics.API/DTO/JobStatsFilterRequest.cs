@@ -4,6 +4,6 @@
     public class JobStatsFilterRequest
     {
         public List<string> BusinessEntities { get; set; } = new List<string>();
-        public DateTime? RecordAsOfDate { get; set; }
+        public DateTime? ReferenceDate { get; set; }
     }
 }

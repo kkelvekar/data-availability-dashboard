@@ -17,7 +17,7 @@ namespace DataLoadStatistics.API
         public int RecordLoaded { get; set; }
         public int RecordFailed { get; set; }
 
-        public static List<JobStats> GenerateRandomJobStats(DateTime recordAsOfDate)
+        public static List<JobStats> GenerateRandomJobStats(DateTime jobStartDate)
         {
             var statsList = new List<JobStats>();
 
@@ -44,50 +44,45 @@ namespace DataLoadStatistics.API
 
             foreach (var entity in businessEntities)
             {
-                // Determine how many records to generate (5 to 20).
+                // How many records to generate (5 to 20).
                 int recordCount = rng.Next(5, 21);
-                // Ensure at least 3-4 records use the provided date
-                int minProvidedCount = rng.Next(5, 10);
+                int minProvidedCount = rng.Next(5, 10); // at least this many on the provided date
 
                 for (int j = 0; j < recordCount; j++)
                 {
-                    // Decide RecordAsOfDate: guarantee the first minProvidedCount use provided date
-                    DateTime asOfDate;
-                    if (j < minProvidedCount)
+                    // 1) Pick the calendar date for this job run
+                    DateTime runDate;
+                    if (j < minProvidedCount || rng.NextDouble() < 0.5)
                     {
-                        asOfDate = recordAsOfDate;
+                        // guaranteed or 50% chance: exactly the provided date
+                        runDate = jobStartDate.Date;
                     }
                     else
                     {
-                        // 50% chance to use provided date thereafter
-                        if (rng.NextDouble() < 0.5)
-                        {
-                            asOfDate = recordAsOfDate;
-                        }
-                        else
-                        {
-                            // Older date: 1 to 6 months back
-                            int monthsBack = rng.Next(1, 7);
-                            var targetMonth = recordAsOfDate.AddMonths(-monthsBack);
-                            int daysInMonth = DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month);
-                            int day = rng.Next(1, daysInMonth + 1);
-                            asOfDate = new DateTime(targetMonth.Year, targetMonth.Month, day);
-                        }
+                        // otherwise pick an older date 1–6 months back, with a random day
+                        int monthsBack = rng.Next(1, 7);
+                        var targetMonth = jobStartDate.AddMonths(-monthsBack);
+                        int daysInMonth = DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month);
+                        int day = rng.Next(1, daysInMonth + 1);
+                        runDate = new DateTime(targetMonth.Year, targetMonth.Month, day);
                     }
 
-                    // Schedule job start times between 00:00 and 23:30
+                    // 2) Schedule job start/end times on runDate
                     int hour = rng.Next(0, 24);
                     int minute = rng.Next(0, 2) * 30; // 0 or 30
-                    DateTime jobStart = new DateTime(asOfDate.Year, asOfDate.Month, asOfDate.Day, hour, minute, 0);
-                    DateTime jobEnd = jobStart.AddMinutes(rng.Next(15, 61)); // Duration 15 to 60 mins
+                    DateTime jobStart = runDate.AddHours(hour).AddMinutes(minute);
+                    DateTime jobEnd = jobStart.AddMinutes(rng.Next(15, 61)); // 15–60 mins
 
-                    bool isSuccess = rng.NextDouble() < 0.8; // 80% success rate
+                    // 3) Determine success/failure
+                    bool isSuccess = rng.NextDouble() < 0.8; // 80% success
                     string jobStatus = isSuccess ? "Success" : "Failure";
                     string qualityStatus = isSuccess ? "Pass" : "Fail";
-
-                    // Random loaded count between 10 and 3000; if failure, loaded = 0
                     int recordLoaded = isSuccess ? rng.Next(10, 3001) : 0;
                     int recordFailed = isSuccess ? 0 : rng.Next(1, 101);
+
+                    // 4) Randomize RecordAsOfDate to be job start date, or 1 or 2 days before
+                    int offsetDays = rng.Next(0, 3); // 0, 1 or 2
+                    DateTime recordAsOfDate = jobStart.Date.AddDays(-offsetDays);
 
                     statsList.Add(new JobStats
                     {
@@ -96,7 +91,7 @@ namespace DataLoadStatistics.API
                         JobStart = jobStart,
                         JobEnd = jobEnd,
                         JobStatus = jobStatus,
-                        RecordAsOfDate = asOfDate,
+                        RecordAsOfDate = recordAsOfDate,
                         QualityStatus = qualityStatus,
                         RecordLoaded = recordLoaded,
                         RecordFailed = recordFailed
@@ -106,6 +101,7 @@ namespace DataLoadStatistics.API
 
             return statsList;
         }
+
 
         /// <summary>
         /// Prints a colorized table of job stats to the console.

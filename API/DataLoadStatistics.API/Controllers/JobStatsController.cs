@@ -21,12 +21,12 @@ namespace DataLoadStatistics.API.Controllers
         [HttpGet]
         public IActionResult GetJobStats([FromQuery] JobStatsFilterRequest request)
         {
-            // Determine the reference date (RecordAsOfDate filter); default to today if not provided.
-            DateTime selectedDate = request.RecordAsOfDate?.Date ?? DateTime.Today;
+            // Determine the reference date (ReferenceDate filter); default to today if not provided.
+            DateTime referenceDate = request.ReferenceDate?.Date ?? DateTime.Today;
             // Generate static job statistics records for the given date.
-            var jobStatsList = JobStats.GenerateRandomJobStats(selectedDate);
+            var jobStatsList = JobStats.GenerateRandomJobStats(referenceDate);
 
-            JobStats.PrintJobStatsTable(jobStatsList);
+            // JobStats.PrintJobStatsTable(jobStatsList);
 
             // Filter by business entities if provided.
             if (request.BusinessEntities != null && request.BusinessEntities.Any())
@@ -36,17 +36,11 @@ namespace DataLoadStatistics.API.Controllers
                     .ToList();
             }
 
-
-            // For each business entity, select the records that have the maximum available RecordAsOfDate.
-            // This returns a flat list that contains all rows corresponding to that "latest" date per entity.
             var latestJobStats = jobStatsList
                 .GroupBy(js => js.BusinessEntity)
-                .SelectMany(group =>
-                {
-                    // Get the maximum RecordAsOfDate for this business entity as of selectedDate.
-                    var maxDate = group.Max(js => js.RecordAsOfDate);
-                    // Return all job stats for this business entity that have that date.
-                    return group.Where(js => js.RecordAsOfDate == maxDate);
+                .SelectMany(g => {
+                    var md = g.Max(x => x.JobStart.Date);
+                    return g.Where(x => x.JobStart.Date == md);
                 })
                 .ToList();
 
