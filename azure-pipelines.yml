@@ -33,7 +33,7 @@ steps:
   inputs:
     command: 'test'
     projects: '**/*.Tests/*.csproj'
-    arguments: '--configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Common.TestResultsDirectory)'
+    arguments: '--configuration $(buildConfiguration) --no-build'
 
 - task: DotNetCoreCLI@2
   displayName: 'Publish Web projects'
