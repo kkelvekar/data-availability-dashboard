@@ -18,8 +18,9 @@ namespace DaDashboard.Application
         /// <returns>The updated service collection.</returns>
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddScoped<IDataDomainOrchestrator, DataDomainOrchestrator>();          
-            services.AddScoped<JobStatsStrategyFactory>();         
+            services.AddScoped<IDataDomainOrchestrator, DataDomainOrchestrator>();
+            services.AddScoped<JobStatsStrategyFactory>();
+            services.AddSingleton<IRagStatusEvaluator, RagStatusEvaluator>();
             return services;
         }
     }

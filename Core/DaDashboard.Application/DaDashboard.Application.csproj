@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.1" />
+    <!-- Dynamic expression interpreter for RAG status evaluation -->
+    <PackageReference Include="DynamicExpresso.Core" Version="2.19.0" />
   </ItemGroup>
 
   <ItemGroup>

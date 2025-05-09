@@ -4,6 +4,7 @@ using DaDashboard.Application.Contracts.Persistence;
 using DaDashboard.Domain;
 using DaDashboard.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using DaDashboard.Application.Contracts.Application.Orchestrator;
 using System.Text.Json;
 
 namespace DaDashboard.Application.Features.Orchestrator
@@ -15,6 +16,7 @@ namespace DaDashboard.Application.Features.Orchestrator
     {
         private readonly JobStatsStrategyFactory _strategyFactory;
         private readonly IBusinessEntityRepository _businessEntityRepository;
+        private readonly IRagStatusEvaluator _ragStatusEvaluator;
         private readonly ILogger<DataDomainOrchestrator> _logger;
 
         /// <summary>
@@ -23,12 +25,15 @@ namespace DaDashboard.Application.Features.Orchestrator
         /// <param name="strategyFactory">Factory to resolve job stats strategies by name.</param>
         /// <param name="businessEntityRepository">Repository for retrieving active business entities.</param>
         /// <param name="logger">Logger instance for diagnostic messages.</param>
-        public DataDomainOrchestrator(JobStatsStrategyFactory strategyFactory,
-                                      IBusinessEntityRepository businessEntityRepository,
-                                      ILogger<DataDomainOrchestrator> logger)
+        public DataDomainOrchestrator(
+            JobStatsStrategyFactory strategyFactory,
+            IBusinessEntityRepository businessEntityRepository,
+            IRagStatusEvaluator ragStatusEvaluator,
+            ILogger<DataDomainOrchestrator> logger)
         {
             _strategyFactory = strategyFactory;
             _businessEntityRepository = businessEntityRepository;
+            _ragStatusEvaluator = ragStatusEvaluator;
             _logger = logger;
         }
 
@@ -45,6 +50,8 @@ namespace DaDashboard.Application.Features.Orchestrator
             {
                 // Retrieve active business entities and extract their names.
                 var activeBusinessEntities = await _businessEntityRepository.GetActiveBusinessEntitiesWithDetailsAsync();
+                if (activeBusinessEntities == null)
+                    throw new ArgumentNullException(nameof(activeBusinessEntities));
                 var allStats = new List<Models.Infrastructure.DataLoadStatistics.JobStats>();
                 var businessEntityConfigGroups = activeBusinessEntities.GroupBy(be => be.BusinessEntityConfig);
 
@@ -89,7 +96,6 @@ namespace DaDashboard.Application.Features.Orchestrator
             IGrouping<string, Models.Infrastructure.DataLoadStatistics.JobStats> jobStatsGroup,
             IEnumerable<BusinessEntity> activeEntities)
         {
-            var random = new Random();
             var matchingEntity = GetBusinessEntityDetails(businessEntityName, activeEntities);
             var applicationOwner = matchingEntity?.ApplicationOwner ?? string.Empty;
 
@@ -100,19 +106,18 @@ namespace DaDashboard.Application.Features.Orchestrator
                     .Select(s => s.Trim())
                 : Enumerable.Empty<string>();
 
+            // determine latest load date and evaluate RAG status
+            var latestLoadDate = jobStatsGroup.Max(js => js.RecordAsOfDate);
+            var status = _ragStatusEvaluator.Evaluate(jobStatsGroup, matchingEntity!.BusinessEntityRAGConfig, latestLoadDate);
             return new BusinessEntitySummary
             {
                 Id = Guid.NewGuid(),
                 ApplicationOwner = applicationOwner,
                 BusinessEntity = businessEntityName,
-                LatestLoadDate = jobStatsGroup.Max(js => js.RecordAsOfDate),
+                LatestLoadDate = latestLoadDate,
                 TotalRecordsLoaded = jobStatsGroup.Sum(js => js.RecordLoaded),
                 DependentFuncs = dependentFuncs,
-                Status = new EntityStatus
-                {
-                    Indicator = (RagIndicator)random.Next(0, 3),
-                    Description = $"Auto-generated status {random.Next(1000, 9999)}"
-                }
+                Status = status
             };
         }
 

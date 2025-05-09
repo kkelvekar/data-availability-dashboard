@@ -9,6 +9,8 @@ using DaDashboard.Application.Features.Orchestrator;
 using DaDashboard.Application.Contracts.Persistence;
 using DaDashboard.Application.Contracts.Application.Orchestrator;
 using DaDashboard.Application.Models.Infrastructure.DataLoadStatistics;
+using AppJobStats = DaDashboard.Application.Models.Infrastructure.DataLoadStatistics.JobStats;
+using DaDashboard.Domain;
 using DaDashboard.Domain.Entities;
 
 namespace DaDashboard.Application.Tests.Features.Orchestrator
@@ -67,15 +69,26 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
             strategyMock.Setup(s => s.StrategyName).Returns("ConfigA");
             strategyMock
                 .Setup(s => s.GetJobStatsAsync(It.IsAny<IEnumerable<BusinessEntity>>()))
-                .ReturnsAsync(new List<JobStats>
+                .ReturnsAsync(new List<AppJobStats>
                 {
-                    new JobStats { Id = Guid.NewGuid(), BusinessEntity = "Entity1", RecordAsOfDate = date1, RecordLoaded = 5 },
-                    new JobStats { Id = Guid.NewGuid(), BusinessEntity = "Entity1", RecordAsOfDate = date2, RecordLoaded = 10 }
+                    new AppJobStats { Id = Guid.NewGuid(), BusinessEntity = "Entity1", RecordAsOfDate = date1, RecordLoaded = 5 },
+                    new AppJobStats { Id = Guid.NewGuid(), BusinessEntity = "Entity1", RecordAsOfDate = date2, RecordLoaded = 10 }
                 });
 
             var factory = new JobStatsStrategyFactory(new[] { strategyMock.Object });
             var loggerMock = new Mock<ILogger<DataDomainOrchestrator>>();
-            var orchestrator = new DataDomainOrchestrator(factory, repoMock.Object, loggerMock.Object);
+            var ragEvaluatorMock = new Mock<IRagStatusEvaluator>();
+            ragEvaluatorMock
+                .Setup(e => e.Evaluate(
+                    It.IsAny<IEnumerable<AppJobStats>>(),
+                    It.IsAny<BusinessEntityRAGConfig>(),
+                    It.IsAny<DateTime>()))
+                .Returns(new EntityStatus { Indicator = RagIndicator.Green, Description = RagIndicator.Green.ToString() });
+            var orchestrator = new DataDomainOrchestrator(
+                factory,
+                repoMock.Object,
+                ragEvaluatorMock.Object,
+                loggerMock.Object);
 
             // Act
             var summaries = (await orchestrator.GetBusinessEntitySummaryAsync()).ToList();
@@ -117,7 +130,12 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
                     .ReturnsAsync(new List<BusinessEntity> { entity });
 
             var factory = new JobStatsStrategyFactory(Array.Empty<IJobStatsStrategy>());
-            var orchestrator = new DataDomainOrchestrator(factory, repoMock.Object, Mock.Of<ILogger<DataDomainOrchestrator>>());
+            var ragEvaluatorMock2 = new Mock<IRagStatusEvaluator>();
+            var orchestrator = new DataDomainOrchestrator(
+                factory,
+                repoMock.Object,
+                ragEvaluatorMock2.Object,
+                Mock.Of<ILogger<DataDomainOrchestrator>>());
 
             // Act & Assert
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(
@@ -132,7 +150,12 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
             repoMock.Setup(r => r.GetActiveBusinessEntitiesWithDetailsAsync(It.IsAny<bool>()))
                     .ReturnsAsync((IEnumerable<BusinessEntity>)null!);
             var factory = new JobStatsStrategyFactory(Array.Empty<IJobStatsStrategy>());
-            var orchestrator = new DataDomainOrchestrator(factory, repoMock.Object, Mock.Of<ILogger<DataDomainOrchestrator>>());
+            var ragEvaluatorMock3 = new Mock<IRagStatusEvaluator>();
+            var orchestrator = new DataDomainOrchestrator(
+                factory,
+                repoMock.Object,
+                ragEvaluatorMock3.Object,
+                Mock.Of<ILogger<DataDomainOrchestrator>>());
 
             // Act & Assert
             await Assert.ThrowsExceptionAsync<ArgumentNullException>(
@@ -209,22 +232,33 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
             strategyA.Setup(s => s.StrategyName).Returns("ConfigA");
             var dateA = new DateTime(2023, 1, 1);
             strategyA.Setup(s => s.GetJobStatsAsync(It.IsAny<IEnumerable<BusinessEntity>>()))
-                     .ReturnsAsync(new List<JobStats>
+                     .ReturnsAsync(new List<AppJobStats>
                      {
-                         new JobStats { BusinessEntity = "EntityA", RecordAsOfDate = dateA, RecordLoaded = 1 }
+                         new AppJobStats { BusinessEntity = "EntityA", RecordAsOfDate = dateA, RecordLoaded = 1 }
                      });
 
             var strategyB = new Mock<IJobStatsStrategy>();
             strategyB.Setup(s => s.StrategyName).Returns("ConfigB");
             var dateB = new DateTime(2023, 2, 1);
             strategyB.Setup(s => s.GetJobStatsAsync(It.IsAny<IEnumerable<BusinessEntity>>()))
-                     .ReturnsAsync(new List<JobStats>
+                     .ReturnsAsync(new List<AppJobStats>
                      {
-                         new JobStats { BusinessEntity = "EntityB", RecordAsOfDate = dateB, RecordLoaded = 2 }
+                         new AppJobStats { BusinessEntity = "EntityB", RecordAsOfDate = dateB, RecordLoaded = 2 }
                      });
 
             var factory2 = new JobStatsStrategyFactory(new[] { strategyA.Object, strategyB.Object });
-            var orchestrator2 = new DataDomainOrchestrator(factory2, repoMock.Object, Mock.Of<ILogger<DataDomainOrchestrator>>());
+            var ragEvaluatorMock4 = new Mock<IRagStatusEvaluator>();
+            ragEvaluatorMock4
+                .Setup(e => e.Evaluate(
+                    It.IsAny<IEnumerable<AppJobStats>>(),
+                    It.IsAny<BusinessEntityRAGConfig>(),
+                    It.IsAny<DateTime>()))
+                .Returns(new EntityStatus { Indicator = RagIndicator.Green, Description = RagIndicator.Green.ToString() });
+            var orchestrator2 = new DataDomainOrchestrator(
+                factory2,
+                repoMock.Object,
+                ragEvaluatorMock4.Object,
+                Mock.Of<ILogger<DataDomainOrchestrator>>());
 
             // Act
             var summaries = (await orchestrator2.GetBusinessEntitySummaryAsync()).OrderBy(s => s.BusinessEntity).ToList();
