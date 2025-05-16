@@ -15,7 +15,7 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
 
         // Amber if any data-quality failure (failed rows > 0)
         private const string AmberExpression =
-            "jobStats.Any(j => j.QualityStatus.ToLower() == \"fail\" && j.RecordFailed > 0)";
+ "jobStats.Any(j => j.JobStatus.ToLower() == \"success\" && j.QualityStatus.ToLower() == \"fail\" && j.RecordFailed > 0)";
 
         private const string FalseExpr = "false";
 
