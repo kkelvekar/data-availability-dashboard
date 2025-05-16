@@ -107,7 +107,7 @@ namespace DaDashboard.Application.Features.Orchestrator
                 : Enumerable.Empty<string>();
 
             // determine latest load date and evaluate RAG status
-            var latestLoadDate = jobStatsGroup.Max(js => js.RecordAsOfDate);
+            var latestLoadDate = jobStatsGroup.Max(js => js.JobStart);
             var status = _ragStatusEvaluator.Evaluate(jobStatsGroup, matchingEntity!.BusinessEntityRAGConfig, latestLoadDate);
             return new BusinessEntitySummary
             {

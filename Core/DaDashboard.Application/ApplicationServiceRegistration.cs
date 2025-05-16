@@ -20,7 +20,7 @@ namespace DaDashboard.Application
         {
             services.AddScoped<IDataDomainOrchestrator, DataDomainOrchestrator>();
             services.AddScoped<JobStatsStrategyFactory>();
-            services.AddSingleton<IRagStatusEvaluator, RagStatusEvaluator>();
+            services.AddScoped<IRagStatusEvaluator, RagStatusEvaluator>();
             return services;
         }
     }
