@@ -13,7 +13,13 @@ namespace DaDashboard.Application.Tests.Features.Orchestrator
     {
         private readonly RagStatusEvaluator _evaluator = new RagStatusEvaluator();
 
-        // Updated RED logic: no runs, or ≥2 full failures, or one full failure + no perfect run afterwards
+        /// <summary>
+        /// “Red” if any of the following is true:
+        ///  1) There are no job runs at all.
+        ///  2) Two or more “full failures” occur (JobStatus == “fail” AND QualityStatus == “fail”).
+        ///  3) At least one “full failure” occurs and there is NO subsequent “perfect” run 
+        ///     (JobStatus == “success” AND QualityStatus == “pass”).
+        /// </summary>
         private const string RedExpression =
             "!jobStats.Any() || jobStats.Count(j => j.JobStatus.ToLower() == \"fail\" && j.QualityStatus.ToLower() == \"fail\") >= 2 || (jobStats.Any(j => j.JobStatus.ToLower() == \"fail\" && j.QualityStatus.ToLower() == \"fail\") && !jobStats.Any(j => j.JobStatus.ToLower() == \"success\" && j.QualityStatus.ToLower() == \"pass\"))";
 
